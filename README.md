@@ -1,16 +1,53 @@
-# React + Vite
+# 📦 Inventory Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A fast and responsive inventory management system built with **React** and **Vite**. It allows users to search, add, edit, and delete products with ease. Styled using **Tailwind CSS** and animated with **Framer Motion**, the interface is optimized for both desktop and mobile views.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 🔍 Real-time product search
+- ➕ Add new inventory items
+- ✏️ Edit existing products
+- 🗑️ Delete items from inventory
+- 📱 Responsive design for mobile and desktop
+- ⚡ Built with Vite for fast development and performance
 
-## React Compiler
+## 🛠 Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- [React](https://reactjs.org/)
+- [Vite](https://vitejs.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Framer Motion](https://www.framer.com/motion/)
+- [React Router](https://reactrouter.com/)
+- [React Hot Toast](https://react-hot-toast.com/)
 
-## Expanding the ESLint configuration
+## 📂 Project Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+src/
+├── assets/
+│   └── react.svg              # Static assets and icons
+├── components/
+│   ├── AddProduct.jsx         # Form for adding new products
+│   ├── ProductList.jsx        # Main inventory table and search
+│   └── UpdateProduct.jsx      # Form for updating existing products
+├── api.js                     # API functions (fetch, delete, search)
+├── App.jsx                    # Root component with routing
+├── index.css                  # Global styles
+└── main.jsx                   # App entry point
+
+
+## 📦 Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/kyooxenn/inventory_system_react.git
+
+# Navigate to the project folder
+cd inventory_system_react
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
+
+Built with ❤️ by Norbs
