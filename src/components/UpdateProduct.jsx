@@ -59,21 +59,28 @@ export default function UpdateProduct() {
     return "";
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const error = validateFields();
-    if (error) return toast.error(error);
+ const handleSubmit = async (e) => {
+   e.preventDefault();
+   const error = validateFields();
+   if (error) return toast.error(error);
 
-    setLoadingUpdate(true);
-    try {
-      await updateProduct(id, product);
-      toast.success("Product updated successfully!");
-      navigate("/");
-    } catch {
-      toast.error("Failed to update product.");
-    }
-    setLoadingUpdate(false);
-  };
+   setLoadingUpdate(true);
+   try {
+     await updateProduct(id, product);
+     toast.success("Product updated successfully!");
+     navigate("/");
+   } catch (err) {
+     console.error("Error updating product:", err.response?.data);
+
+     const backendMessage =
+       err.response?.data?.errorMessage ||
+       "Failed to update product. Please try again.";
+
+     toast.error(backendMessage);
+   } finally {
+     setLoadingUpdate(false);
+   }
+ };
 
   const handleDelete = async () => {
     setLoadingDelete(true);

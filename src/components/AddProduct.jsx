@@ -42,9 +42,17 @@ export default function AddProduct() {
       toast.success("Product added successfully!");
       navigate("/");
     } catch (err) {
-      toast.error(err.response?.data?.errorMessage || "Failed to add product.");
+      console.error("Error adding product:", err.response?.data);
+
+      // Extract backend error message
+      const backendMessage =
+        err.response?.data?.errorMessage ||
+        "Failed to add product. Please try again.";
+
+      toast.error(backendMessage);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
