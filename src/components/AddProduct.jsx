@@ -54,7 +54,7 @@ export default function AddProduct() {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="max-w-xl mx-auto p-6 mt-10 bg-gray-900 text-white rounded-lg shadow-lg"
     >
-      <h2 className="text-3xl font-bold mb-6 text-center text-white drop-shadow-lg">
+      <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">
         ✨ Add New Product
       </h2>
 
