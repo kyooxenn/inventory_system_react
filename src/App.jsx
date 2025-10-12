@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import ProductList from "./components/ProductList";
 import AddProduct from "./components/AddProduct";
 import UpdateProduct from "./components/UpdateProduct";
@@ -8,7 +8,6 @@ import AdjustQuantity from "./components/AdjustQuantity";
 function App() {
     return (
         <Router>
-
             <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/inventory" element={<ProductList />} />
