@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { createProduct } from "../api";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
@@ -26,17 +26,13 @@ export default function AddProduct() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ Auto-generate ID when the component first loads
   useEffect(() => {
     setProduct((prev) => ({ ...prev, id: generateId() }));
   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    // ✅ Prevent invalid decimal inputs for unitPrice
     if (name === "unitPrice" && !/^\d*\.?\d*$/.test(value)) return;
-
     setProduct((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -76,187 +72,190 @@ export default function AddProduct() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="max-w-xl mx-auto p-6 mt-10 bg-gray-900 text-white rounded-lg shadow-lg"
-    >
-      {/* ✅ Generated Product ID Display */}
-      <div className="text-center mb-2">
-        <p className="text-sm text-gray-400">Generated Product ID</p>
-        <p className="text-lg font-semibold text-blue-400 tracking-widest">
-          {product.id || "Generating..."}
-        </p>
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-center items-center py-10 px-4">
+      {/* Header + Back Navigation */}
+      <div className="w-full max-w-5xl flex justify-between items-center mb-6">
+        <h1 className="text-4xl font-extrabold text-blue-400 drop-shadow-lg">
+          ✨ Add New Product
+        </h1>
+        <Link
+          to="/"
+          className="text-gray-300 hover:text-blue-400 transition font-medium"
+        >
+          ← Back to Dashboard
+        </Link>
       </div>
 
-      <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">
-        ✨ Add New Product
-      </h2>
+      {/* Form Container */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="w-full max-w-5xl bg-gray-900/80 backdrop-blur-lg rounded-2xl shadow-lg p-10 border border-gray-800"
+      >
+        {/* Product ID */}
+        <div className="text-center mb-6">
+          <p className="text-sm text-gray-400">Generated Product ID</p>
+          <p className="text-lg font-semibold text-blue-400 tracking-widest">
+            {product.id || "Generating..."}
+          </p>
+        </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Item Name */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <label htmlFor="itemName" className="block mb-1 font-medium">
-            Item Name
-          </label>
-          <input
-            id="itemName"
-            name="itemName"
-            type="text"
-            value={product.itemName}
-            onChange={handleChange}
-            className="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter item name"
-            required
-          />
-        </motion.div>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left Column */}
+          <div className="space-y-5">
+            {/* Item Name */}
+            <div>
+              <label className="block mb-1 font-medium">Item Name</label>
+              <input
+                name="itemName"
+                type="text"
+                value={product.itemName}
+                onChange={handleChange}
+                className="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-4 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter item name"
+                required
+              />
+            </div>
 
-        {/* Category */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <label htmlFor="category" className="block mb-1 font-medium">
-            Category
-          </label>
-          <select
-            id="category"
-            name="category"
-            value={product.category}
-            onChange={handleChange}
-            className="w-full bg-gray-800 text-white border border-gray-700 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="">Select Category</option>
-            {productTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </motion.div>
-
-        {/* Unit */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <label htmlFor="unit" className="block mb-1 font-medium">
-            Unit
-          </label>
-          <select
-            id="unit"
-            name="unit"
-            value={product.unit}
-            onChange={handleChange}
-            className="w-full bg-gray-800 text-white border border-gray-700 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="">Select Unit</option>
-            {unitTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </motion.div>
-
-        {/* Description, Quantity, Unit Price */}
-        {[
-          {
-            label: "Description",
-            name: "description",
-            type: "text",
-            placeholder: "Enter description",
-            delay: 0.4,
-          },
-          {
-            label: "Quantity",
-            name: "quantity",
-            type: "number",
-            placeholder: "Enter quantity",
-            delay: 0.5,
-          },
-          {
-            label: "Unit Price",
-            name: "unitPrice",
-            type: "text",
-            placeholder: "Enter unit price",
-            delay: 0.6,
-          },
-        ].map(({ label, name, type, placeholder, delay }) => (
-          <motion.div
-            key={name}
-            initial={{ opacity: 0, x: name === "quantity" ? -20 : 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay }}
-          >
-            <label htmlFor={name} className="block mb-1 font-medium">
-              {label}
-            </label>
-            <input
-              id={name}
-              name={name}
-              type={type}
-              value={product[name]}
-              onChange={handleChange}
-              className="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={placeholder}
-              required
-            />
-          </motion.div>
-        ))}
-
-        {/* Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="flex justify-between items-center pt-4"
-        >
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className="flex items-center gap-2"
+            {/* Category */}
+            <div>
+              <label className="block mb-1 font-medium">Category</label>
+              <select
+                name="category"
+                value={product.category}
+                onChange={handleChange}
+                className="w-full bg-gray-800 text-white border border-gray-700 px-4 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               >
+                <option value="">Select Category</option>
+                {productTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Unit */}
+            <div>
+              <label className="block mb-1 font-medium">Unit</label>
+              <select
+                name="unit"
+                value={product.unit}
+                onChange={handleChange}
+                className="w-full bg-gray-800 text-white border border-gray-700 px-4 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Select Unit</option>
+                {unitTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-5">
+            {/* Description */}
+            <div>
+              <label className="block mb-1 font-medium">Description</label>
+              <input
+                name="description"
+                type="text"
+                value={product.description}
+                onChange={handleChange}
+                className="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-4 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter description"
+                required
+              />
+            </div>
+
+            {/* Quantity */}
+            <div>
+              <label className="block mb-1 font-medium">Quantity</label>
+              <input
+                name="quantity"
+                type="number"
+                value={product.quantity}
+                onChange={handleChange}
+                className="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-4 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter quantity"
+                required
+              />
+            </div>
+
+            {/* Unit Price */}
+            <div>
+              <label className="block mb-1 font-medium">Unit Price</label>
+              <input
+                name="unitPrice"
+                type="text"
+                value={product.unitPrice}
+                onChange={handleChange}
+                className="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-4 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter unit price"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="col-span-1 md:col-span-2 flex justify-between items-center pt-4">
+            <motion.button
+              type="submit"
+              disabled={loading}
+              whileTap={{ scale: 0.95 }}
+              className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 disabled:opacity-50 font-semibold shadow-md transition"
+            >
+              {loading ? (
                 <motion.div
-                  className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-                  animate={{ rotate: 360 }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 1,
-                    ease: "linear",
-                  }}
-                />
-                <span className="animate-pulse">Saving...</span>
-              </motion.div>
-            ) : (
-              "Save Product"
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="text-gray-300 hover:underline"
-          >
-            Cancel
-          </button>
-        </motion.div>
-      </form>
-    </motion.div>
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex items-center gap-2"
+                >
+                  <motion.div
+                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 1,
+                      ease: "linear",
+                    }}
+                  />
+                  <span className="animate-pulse">Saving...</span>
+                </motion.div>
+              ) : (
+                "💾 Save Product"
+              )}
+            </motion.button>
+
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="text-gray-300 hover:text-red-400 transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </motion.div>
+
+      {/* Footer */}
+      <motion.footer
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="mt-10 text-gray-500 text-sm text-center"
+      >
+        © 2025 Norbs | Built with{" "}
+        <span className="text-blue-400">React</span> +{" "}
+        <span className="text-teal-400">Tailwind</span> +{" "}
+        <span className="text-pink-400">Motion</span>
+      </motion.footer>
+    </div>
   );
 }
