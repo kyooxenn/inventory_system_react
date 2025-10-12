@@ -90,11 +90,11 @@ export default function Dashboard() {
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 px-6 mt-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 px-6 mt-10">
           <Link to="/add-product">
             <motion.button
               whileTap={{ scale: 0.95 }}
-              className="bg-green-600 hover:bg-green-700 transition text-white rounded-xl py-4 font-semibold shadow-md w-full"
+              className="bg-green-600 hover:bg-green-700 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full"
             >
               ➕ Add Product
             </motion.button>
@@ -103,7 +103,7 @@ export default function Dashboard() {
           <Link to="/inventory">
             <motion.button
               whileTap={{ scale: 0.95 }}
-              className="bg-blue-600 hover:bg-blue-700 transition text-white rounded-xl py-4 font-semibold shadow-md w-full"
+              className="bg-blue-600 hover:bg-blue-700 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full"
             >
               📦 View Inventory
             </motion.button>
@@ -111,9 +111,16 @@ export default function Dashboard() {
 
           <motion.button
             whileTap={{ scale: 0.95 }}
-            className="bg-red-600 hover:bg-red-700 transition text-white rounded-xl py-4 font-semibold shadow-md w-full"
+            className="bg-yellow-500 hover:bg-yellow-600 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full"
           >
-            🔻 Adjust Stock
+            ⬆️ Increase Quantity
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            className="bg-red-600 hover:bg-red-700 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full"
+          >
+            ⬇️ Decrease Quantity
           </motion.button>
         </div>
 
