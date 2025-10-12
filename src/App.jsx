@@ -3,6 +3,7 @@ import ProductList from "./components/ProductList";
 import AddProduct from "./components/AddProduct";
 import UpdateProduct from "./components/UpdateProduct";
 import Dashboard from "./components/Dashboard";
+import AdjustQuantity from "./components/AdjustQuantity";
 
 function App() {
     return (
@@ -13,6 +14,7 @@ function App() {
                 <Route path="/inventory" element={<ProductList />} />
                 <Route path="/add-product" element={<AddProduct />} />
                 <Route path="/update-product/:id" element={<UpdateProduct />} />
+                <Route path="/adjust/:type" element={<AdjustQuantity />} />
             </Routes>
         </Router>
     );

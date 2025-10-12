@@ -109,19 +109,23 @@ export default function Dashboard() {
             </motion.button>
           </Link>
 
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className="bg-yellow-500 hover:bg-yellow-600 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full"
-          >
-            ⬆️ Increase Quantity
-          </motion.button>
+          <Link to="/adjust/increase">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              className="bg-yellow-500 hover:bg-yellow-600 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full"
+            >
+              ⬆️ Increase Quantity
+            </motion.button>
+          </Link>
 
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className="bg-red-600 hover:bg-red-700 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full"
-          >
-            ⬇️ Decrease Quantity
-          </motion.button>
+          <Link to="/adjust/decrease">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              className="bg-red-600 hover:bg-red-700 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full"
+            >
+              ⬇️ Decrease Quantity
+            </motion.button>
+          </Link>
         </div>
 
         {/* Footer */}

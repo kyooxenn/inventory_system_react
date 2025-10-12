@@ -71,7 +71,7 @@ export default function UpdateProduct() {
     try {
       await updateProduct(id, product);
       toast.success("Product updated successfully!");
-      navigate("/");
+      navigate("/inventory");
     } catch (err) {
       const backendMessage =
         err.response?.data?.errorMessage ||
@@ -87,7 +87,7 @@ export default function UpdateProduct() {
     try {
       await deleteProduct(id);
       toast.success("Product deleted successfully!");
-      navigate("/");
+      navigate("/inventory");
     } catch {
       toast.error("Failed to delete product.");
     } finally {
@@ -276,7 +276,7 @@ export default function UpdateProduct() {
 
               <button
                 type="button"
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/inventory")}
                 className="text-gray-300 hover:text-red-400 transition"
               >
                 Cancel

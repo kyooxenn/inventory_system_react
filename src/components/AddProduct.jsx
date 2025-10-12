@@ -59,7 +59,7 @@ export default function AddProduct() {
     try {
       await createProduct(product);
       toast.success(`Product added successfully!`);
-      navigate("/");
+      navigate("/inventory");
     } catch (err) {
       console.error("Error adding product:", err.response?.data);
       const backendMessage =
@@ -235,7 +235,7 @@ export default function AddProduct() {
 
             <button
               type="button"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/inventory")}
               className="text-gray-300 hover:text-red-400 transition"
             >
               Cancel
