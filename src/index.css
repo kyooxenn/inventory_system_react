@@ -44,43 +44,66 @@ h1 {
   margin-bottom: 1rem;
 }
 
-/* ✅ Messenger-safe button styling */
+/* ✅ Responsive, fixed-size buttons */
 button {
-  border-radius: 8px;
-  border: 1px solid white;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 0.8em 1.2em;
+  font-size: 1rem;
+  font-weight: 600;
   font-family: inherit;
   background-color: #1f2937; /* Tailwind's bg-gray-800 */
   color: white;
   cursor: pointer;
-  transition: background-color 0.25s, border-color 0.25s;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  /* Consistent sizing */
   width: 100%;
-  max-width: 300px;
+  max-width: 260px;
+  min-height: 52px;
   box-sizing: border-box;
-  margin: 0 auto 1rem auto;
-  display: block;
 }
+
+/* Hover & focus effects */
 button:hover {
   background-color: #374151; /* Tailwind's bg-gray-700 */
-  border-color: #646cff;
+  border-color: #3b82f6; /* Tailwind blue-500 */
 }
+
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
 }
 
-/* ✅ Responsive layout container */
+/* ✅ Container alignment for mixed layouts */
 .dashboard-container {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
-  padding: 1rem;
   gap: 1rem;
+  padding: 1rem;
 }
 
-/* ❌ Remove button override from light mode */
+/* ✅ Responsive breakpoints */
+@media (min-width: 640px) {
+  button {
+    max-width: 240px;
+  }
+}
+
+@media (min-width: 1024px) {
+  button {
+    max-width: 260px;
+  }
+}
+
+/* ✅ Light mode cleanup */
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -89,8 +112,4 @@ button:focus-visible {
   a:hover {
     color: #747bff;
   }
-
-  /* button {
-    background-color: #f9f9f9;
-  } */
 }
