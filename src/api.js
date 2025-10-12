@@ -10,13 +10,13 @@ export const getAllProducts = async () => {
     return response.data;
 };
 
-export const getProduct = async (productName) => {
-    const response = await axios.get(`${API_BASE_URL}/name/${productName}`);
+export const getProduct = async (itemName) => {
+    const response = await axios.get(`${API_BASE_URL}/details/${itemName}`);
     return response.data;
 };
 
 export const getProductById = async (id) => {
-    const response = await axios.get(`${API_BASE_URL}/id/${id}`);
+    const response = await axios.get(`${API_BASE_URL}/${id}`);
     return response.data;
 };
 

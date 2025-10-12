@@ -67,7 +67,7 @@ export default function ProductList() {
           <div className="flex gap-2 w-full md:w-auto">
             <input
               type="text"
-              placeholder="Search products by name..."
+              placeholder="Search products by item name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-gray-800 text-white placeholder-gray-400 border border-gray-600 px-4 py-2 rounded-md w-full md:w-72 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -104,22 +104,24 @@ export default function ProductList() {
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-100 text-gray-700 uppercase tracking-wide">
               <tr>
-                <th className="px-4 py-3 text-left whitespace-nowrap">Name</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap">Item Name</th>
                 <th className="px-4 py-3 text-left whitespace-nowrap">Description</th>
-                <th className="px-4 py-3 text-left whitespace-nowrap">Type</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap">Category</th>
                 <th className="px-4 py-3 text-left whitespace-nowrap">Quantity</th>
                 <th className="px-4 py-3 text-left whitespace-nowrap">Price</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap">Unit</th>
                 <th className="px-4 py-3 text-center whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredProducts.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50 transition h-[72px] align-middle">
-                  <td className="px-4 py-3 text-gray-800 font-medium align-middle">{product.productName}</td>
+                  <td className="px-4 py-3 text-gray-800 font-medium align-middle">{product.itemName}</td>
                   <td className="px-4 py-3 text-gray-600 align-middle">{product.description}</td>
-                  <td className="px-4 py-3 text-gray-600 align-middle">{product.productType}</td>
+                  <td className="px-4 py-3 text-gray-600 align-middle">{product.category}</td>
                   <td className="px-4 py-3 text-gray-600 align-middle">{product.quantity}</td>
                   <td className="px-4 py-3 text-gray-600 align-middle">{product.unitPrice} PHP</td>
+                  <td className="px-4 py-3 text-gray-600 align-middle">{product.unit}</td>
                   <td className="px-4 py-3 text-center align-middle">
                     <div className="flex gap-2 items-center justify-center">
                       <Link to={`/update-product/${product.id}`}>
