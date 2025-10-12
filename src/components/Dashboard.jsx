@@ -56,7 +56,7 @@ export default function Dashboard() {
                 Total Inventory Value
               </h3>
               <p className="text-3xl font-bold mt-2 text-blue-400">
-                ₱{totalValue.toFixed(2)}
+                ₱{totalValue.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
             <img
