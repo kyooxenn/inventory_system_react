@@ -34,7 +34,7 @@ export default function Dashboard() {
     <>
       <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between pb-24">
         {/* Header */}
-        <div className="px-6 pt-10 text-center">
+        <div className="px-4 pt-10 text-center">
           <h1 className="text-4xl font-extrabold mb-2 drop-shadow-lg text-blue-400">
             🧭 Dashboard Overview
           </h1>
@@ -44,7 +44,7 @@ export default function Dashboard() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-6 mt-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-4 mt-10">
           {/* Total Inventory Value */}
           <motion.div
             whileHover={{ scale: 1.03 }}
@@ -56,7 +56,10 @@ export default function Dashboard() {
                 Total Inventory Value
               </h3>
               <p className="text-3xl font-bold mt-2 text-blue-400">
-                ₱{totalValue.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₱{totalValue.toLocaleString("en-PH", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </p>
             </div>
             <img
@@ -90,11 +93,11 @@ export default function Dashboard() {
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 px-6 mt-10">
+        <div className="flex flex-col items-center px-4 mt-10 space-y-4 md:grid md:grid-cols-4 md:gap-6 md:space-y-0">
           <Link to="/add-product">
             <motion.button
               whileTap={{ scale: 0.95 }}
-              className="bg-green-600 hover:bg-green-700 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full"
+              className="bg-green-600 hover:bg-green-700 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full max-w-xs mx-auto"
             >
               ➕ Add Product
             </motion.button>
@@ -103,7 +106,7 @@ export default function Dashboard() {
           <Link to="/inventory">
             <motion.button
               whileTap={{ scale: 0.95 }}
-              className="bg-blue-600 hover:bg-blue-700 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full"
+              className="bg-blue-600 hover:bg-blue-700 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full max-w-xs mx-auto"
             >
               📦 View Inventory
             </motion.button>
@@ -112,7 +115,7 @@ export default function Dashboard() {
           <Link to="/adjust/increase">
             <motion.button
               whileTap={{ scale: 0.95 }}
-              className="bg-yellow-500 hover:bg-yellow-600 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full"
+              className="bg-yellow-500 hover:bg-yellow-600 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full max-w-xs mx-auto"
             >
               ⬆️ Increase Quantity
             </motion.button>
@@ -121,7 +124,7 @@ export default function Dashboard() {
           <Link to="/adjust/decrease">
             <motion.button
               whileTap={{ scale: 0.95 }}
-              className="bg-red-600 hover:bg-red-700 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full"
+              className="bg-red-600 hover:bg-red-700 transition text-white rounded-2xl py-5 font-semibold shadow-lg w-full max-w-xs mx-auto"
             >
               ⬇️ Decrease Quantity
             </motion.button>
