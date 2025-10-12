@@ -86,7 +86,7 @@ export default function ProductList() {
           <div className="flex gap-2 w-full md:w-auto">
             <input
               type="text"
-              placeholder="🔍 Search product by name..."
+              placeholder="🔍 Search product..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-4 py-2.5 rounded-md w-full md:w-80 focus:outline-none focus:ring-2 focus:ring-blue-500"
