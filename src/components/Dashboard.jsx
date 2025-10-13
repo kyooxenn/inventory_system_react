@@ -4,7 +4,7 @@ import { getAllProducts } from "/src/services/api.js";
 import { logout } from "/src/services/auth.js";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
-import { LogOut } from "lucide-react"; // ✅ Icon
+import { LogOut } from "lucide-react";
 
 export default function Dashboard() {
   const [products, setProducts] = useState([]);
@@ -47,22 +47,24 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between pb-24 relative">
-        {/* ✅ Floating Logout Button (top-right, independent from title) */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleLogout}
-          className="absolute top-6 right-6 flex items-center gap-2 bg-gray-800 hover:bg-gray-700
-                     text-white px-4 py-2 rounded-lg shadow-md transition
-                     z-50 cursor-pointer"
-        >
-          <LogOut className="w-5 h-5" />
-          <span className="font-medium">Log Out</span>
-        </motion.button>
+      {/* ✅ Logout button now truly fixed to screen, not container */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={handleLogout}
+        className="fixed top-3 right-3 flex items-center gap-1 sm:gap-2 bg-gray-800 hover:bg-gray-700
+                   text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg shadow-md
+                   transition-all duration-200 z-50 cursor-pointer text-xs sm:text-sm"
+      >
+        <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+        <span className="font-medium">Log Out</span>
+      </motion.button>
+
+      {/* ✅ Main dashboard container (no relative positioning here) */}
+      <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between pb-24">
 
         {/* Header */}
-        <div className="px-4 pt-10 text-center">
+        <div className="px-4 pt-14 text-center">
           <h1 className="text-4xl font-extrabold mb-2 drop-shadow-lg text-blue-400">
             🧭 Dashboard Overview
           </h1>
