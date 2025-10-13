@@ -1,6 +1,6 @@
 import axios from "axios";
 
-//const API_URL = "http://localhost:8080/api/auth"; // adjust if needed
+//const API_BASE_URL = "http://localhost:8080/api/auth"; // adjust if needed
 
 //deploy online render
 const API_BASE_URL = "https://inventory-system-dair.onrender.com/api/auth";
