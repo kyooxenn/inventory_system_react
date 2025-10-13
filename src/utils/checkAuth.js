@@ -15,7 +15,7 @@ export const logout = ({ redirect = true, showMsg = false, delayMs = 0 } = {}) =
 
   if (redirect) {
     setTimeout(() => {
-      window.location.href = "/login"; // ✅ full reload, safe everywhere
+      window.location.href = "#/login"; // ✅ full reload, safe everywhere
     }, delayMs);
   }
 };
