@@ -7,9 +7,16 @@ import { toast } from "react-hot-toast";
 export default function Dashboard() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [dateTime, setDateTime] = useState(new Date()); // ✅ New state for time
 
   useEffect(() => {
     loadProducts();
+  }, []);
+
+  useEffect(() => {
+    // ✅ Live date/time updater
+    const interval = setInterval(() => setDateTime(new Date()), 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadProducts = async () => {
@@ -38,9 +45,28 @@ export default function Dashboard() {
           <h1 className="text-4xl font-extrabold mb-2 drop-shadow-lg text-blue-400">
             🧭 Dashboard Overview
           </h1>
-          <p className="text-gray-400 text-sm font-medium">
+          <p className="text-gray-400 text-sm font-medium mb-1">
             Monitor and manage your inventory in real time.
           </p>
+
+          {/* ✅ Live Date & Time */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-gray-300 text-sm font-mono tracking-wide mt-1"
+          >
+            {dateTime.toLocaleString("en-PH", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: true,
+            })}
+          </motion.p>
         </div>
 
         {/* Summary Cards */}

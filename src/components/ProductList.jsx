@@ -5,11 +5,39 @@ import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
+// ✅ Animated Empty State Component
+const EmptyState = ({ message }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ duration: 0.6 }}
+    className="flex flex-col items-center justify-center py-12 text-gray-500"
+  >
+    <motion.div
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ delay: 0.2, type: 'spring', stiffness: 120 }}
+      className="text-6xl mb-3"
+    >
+      📭
+    </motion.div>
+    <motion.p
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.4 }}
+      className="italic text-gray-400 text-lg"
+    >
+      {message}
+    </motion.p>
+  </motion.div>
+);
+
 export default function ProductList() {
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
 
   useEffect(() => {
     loadProducts();
@@ -39,7 +67,8 @@ export default function ProductList() {
       } else {
         const results = await getProduct(searchQuery);
         setFilteredProducts(results && results.length > 0 ? results : []);
-        if (!results || results.length === 0) toast("No matching products found.");
+        if (!results || results.length === 0)
+          toast("No matching products found.");
       }
     } catch {
       toast.error("Search failed.");
@@ -51,7 +80,7 @@ export default function ProductList() {
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this product?")) return;
-    setLoading(true);
+    setDeleteLoadingId(id);
     try {
       await deleteProduct(id);
       toast.success("Product deleted successfully!");
@@ -59,7 +88,7 @@ export default function ProductList() {
     } catch {
       toast.error("Failed to delete product.");
     } finally {
-      setLoading(false);
+      setDeleteLoadingId(null);
     }
   };
 
@@ -70,7 +99,10 @@ export default function ProductList() {
         <h1 className="text-4xl font-extrabold text-blue-400 drop-shadow-lg">
           📦 Product Inventory
         </h1>
-        <Link to="/" className="text-gray-300 hover:text-blue-400 transition font-medium">
+        <Link
+          to="/"
+          className="text-gray-300 hover:text-blue-400 transition font-medium"
+        >
           🧭 Back to Dashboard
         </Link>
       </div>
@@ -123,7 +155,6 @@ export default function ProductList() {
 
       {/* Content wrapper */}
       <div className="w-full max-w-5xl">
-        {/* Loading state */}
         {loading && (
           <div className="w-full mb-4 text-center text-gray-300">Loading...</div>
         )}
@@ -157,11 +188,21 @@ export default function ProductList() {
                       transition={{ duration: 0.2 }}
                       className="hover:bg-gray-800 transition"
                     >
-                      <td className="px-4 py-3 font-medium text-gray-100">{product.itemName}</td>
-                      <td className="px-4 py-3 text-gray-400">{product.description}</td>
-                      <td className="px-4 py-3 text-gray-400">{product.category}</td>
-                      <td className="px-4 py-3 text-gray-400">{product.quantity}</td>
-                      <td className="px-4 py-3 text-gray-400">₱{product.unitPrice}</td>
+                      <td className="px-4 py-3 font-medium text-gray-100">
+                        {product.itemName}
+                      </td>
+                      <td className="px-4 py-3 text-gray-400">
+                        {product.description}
+                      </td>
+                      <td className="px-4 py-3 text-gray-400">
+                        {product.category}
+                      </td>
+                      <td className="px-4 py-3 text-gray-400">
+                        {product.quantity}
+                      </td>
+                      <td className="px-4 py-3 text-gray-400">
+                        ₱{product.unitPrice}
+                      </td>
                       <td className="px-4 py-3 text-gray-400">{product.unit}</td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex gap-2 justify-center">
@@ -172,10 +213,17 @@ export default function ProductList() {
                           </Link>
                           <button
                             onClick={() => handleDelete(product.id)}
-                            disabled={loading}
+                            disabled={deleteLoadingId === product.id}
                             className="bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700 disabled:opacity-50 font-semibold transition"
                           >
-                            🗑 Delete
+                            {deleteLoadingId === product.id ? (
+                              <div className="flex items-center gap-1">
+                                <Loader2 className="animate-spin h-4 w-4" />
+                                <span>Deleting...</span>
+                              </div>
+                            ) : (
+                              "🗑 Delete"
+                            )}
                           </button>
                         </div>
                       </td>
@@ -183,8 +231,14 @@ export default function ProductList() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="text-center py-8 text-gray-500 italic">
-                      {searchQuery ? "No matching products found." : "No products available."}
+                    <td colSpan="7">
+                      <EmptyState
+                        message={
+                          searchQuery
+                            ? "No matching products found."
+                            : "No products available."
+                        }
+                      />
                     </td>
                   </tr>
                 )}
@@ -205,13 +259,37 @@ export default function ProductList() {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-lg font-bold text-blue-400 mb-1">{product.itemName}</h2>
-                    <p className="text-gray-400 text-sm mb-2 line-clamp-3">{product.description}</p>
+                    <h2 className="text-lg font-bold text-blue-400 mb-1">
+                      {product.itemName}
+                    </h2>
+                    <p className="text-gray-400 text-sm mb-2 line-clamp-3">
+                      {product.description}
+                    </p>
                     <div className="text-gray-400 text-sm space-y-1">
-                      <div>📁 <span className="font-medium text-gray-200">{product.category}</span></div>
-                      <div>📦 <span className="font-medium text-gray-200">Qty: {product.quantity}</span></div>
-                      <div>💰 <span className="font-medium text-gray-200">₱{product.unitPrice}</span></div>
-                      <div>📐 <span className="font-medium text-gray-200">{product.unit}</span></div>
+                      <div>
+                        📁{" "}
+                        <span className="font-medium text-gray-200">
+                          {product.category}
+                        </span>
+                      </div>
+                      <div>
+                        📦{" "}
+                        <span className="font-medium text-gray-200">
+                          Qty: {product.quantity}
+                        </span>
+                      </div>
+                      <div>
+                        💰{" "}
+                        <span className="font-medium text-gray-200">
+                          ₱{product.unitPrice}
+                        </span>
+                      </div>
+                      <div>
+                        📐{" "}
+                        <span className="font-medium text-gray-200">
+                          {product.unit}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -224,24 +302,39 @@ export default function ProductList() {
                   </Link>
                   <button
                     onClick={() => handleDelete(product.id)}
-                    disabled={loading}
+                    disabled={deleteLoadingId === product.id}
                     className="w-28 bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 disabled:opacity-50 font-semibold"
                   >
-                    🗑 Delete
+                    {deleteLoadingId === product.id ? (
+                      <div className="flex items-center justify-center gap-1">
+                        <Loader2 className="animate-spin h-4 w-4" />
+                        <span>...</span>
+                      </div>
+                    ) : (
+                      "🗑 Delete"
+                    )}
                   </button>
                 </div>
               </motion.div>
             ))
           ) : (
-            <div className="text-center py-8 text-gray-500 italic">
-              {searchQuery ? "No matching products found." : "No products available."}
-            </div>
+            <EmptyState
+              message={
+                searchQuery
+                  ? "No matching products found."
+                  : "No products available."
+              }
+            />
           )}
         </div>
 
         {/* Reset Search */}
         {filteredProducts.length === 0 && searchQuery && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2 text-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-2 text-center"
+          >
             <button
               onClick={() => {
                 setSearchQuery("");
@@ -262,7 +355,10 @@ export default function ProductList() {
         transition={{ duration: 0.6 }}
         className="mt-10 text-gray-500 text-sm text-center"
       >
-        © 2025 Norbs | Built with <span className="text-blue-400">React</span> + <span className="text-teal-400">Tailwind</span> + <span className="text-pink-400">Motion</span>
+        © 2025 Norbs | Built with{" "}
+        <span className="text-blue-400">React</span> +{" "}
+        <span className="text-teal-400">Tailwind</span> +{" "}
+        <span className="text-pink-400">Motion</span>
       </motion.footer>
     </div>
   );

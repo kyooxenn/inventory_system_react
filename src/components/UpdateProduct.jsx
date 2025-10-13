@@ -83,6 +83,7 @@ export default function UpdateProduct() {
   };
 
   const handleDelete = async () => {
+      if (!confirm("Delete this product?")) return;
     setLoadingDelete(true);
     try {
       await deleteProduct(id);
