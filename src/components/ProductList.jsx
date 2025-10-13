@@ -168,7 +168,8 @@ export default function ProductList() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-2xl shadow-lg overflow-x-auto"
+            className="bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-2xl shadow-lg overflow-x-auto overflow-y-auto w-full max-w-screen-xl mx-auto"
+            style={{ minHeight: '400px', maxHeight: '300px' }}
           >
             <table className="min-w-full text-sm">
               <thead className="bg-gray-800 text-gray-300 uppercase tracking-wide">
@@ -182,7 +183,7 @@ export default function ProductList() {
                   <th className="px-4 py-3 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800">
+              <tbody className="divide-y divide-gray-700">
                 {filteredProducts.length > 0 ? (
                   filteredProducts.map((product) => (
                     <motion.tr
@@ -213,22 +214,25 @@ export default function ProductList() {
                       <td className="px-4 py-3 text-center">
                         <div className="flex flex-wrap items-center justify-center gap-2">
                           <Link to={`/update-product/${product.id}`}>
-                            <button className="w-28 bg-yellow-500 hover:bg-yellow-600 text-white px-2.5 py-1 rounded-md font-medium text-[0.75rem] leading-tight transition shadow-sm whitespace-nowrap flex justify-center items-center">
-                              ✏️ Edit
+                            <button className="w-20 bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded-md font-medium text-xs leading-tight transition shadow-sm whitespace-nowrap flex justify-center items-center gap-1">
+                              ✏️
+                              <span>Edit</span>
                             </button>
                           </Link>
                           <button
                             onClick={() => handleDelete(product.id)}
                             disabled={deleteLoadingId === product.id}
-                            className="w-28 bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded-md font-medium text-[0.75rem] leading-tight transition disabled:opacity-50 shadow-sm whitespace-nowrap flex justify-center items-center"
+                            className="w-20 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-md font-medium text-xs leading-tight transition disabled:opacity-50 shadow-sm whitespace-nowrap flex justify-center items-center gap-1"
                           >
                             {deleteLoadingId === product.id ? (
                               <div className="flex items-center gap-1">
-                                <Loader2 className="animate-spin h-3.5 w-3.5" />
-                                <span>Deleting...</span>
+                                <Loader2 className="animate-spin h-3 w-3" />
+                                <span className="text-xs">Deleting</span>
                               </div>
                             ) : (
-                              "🗑 Delete"
+                              <>
+                                🗑 <span>Delete</span>
+                              </>
                             )}
                           </button>
                         </div>
