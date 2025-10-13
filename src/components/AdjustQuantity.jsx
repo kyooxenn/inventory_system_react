@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAllProducts, updateProduct } from "../api";
+import { getAllProducts, updateProduct } from "/src/services/api.js";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
 

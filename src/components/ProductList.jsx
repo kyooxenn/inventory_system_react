@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { getAllProducts, deleteProduct, getProduct } from "../api";
+import { getAllProducts, deleteProduct, getProduct } from "/src/services/api.js";
 import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { getProductById, updateProduct, deleteProduct } from "../api";
+import { getProductById, updateProduct, deleteProduct } from "/src/services/api.js";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";

@@ -4,19 +4,62 @@ import AddProduct from "./components/AddProduct";
 import UpdateProduct from "./components/UpdateProduct";
 import Dashboard from "./components/Dashboard";
 import AdjustQuantity from "./components/AdjustQuantity";
+import Login from "./components/Login";
+import Register from "./components/Register";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
-    return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/inventory" element={<ProductList />} />
-                <Route path="/add-product" element={<AddProduct />} />
-                <Route path="/update-product/:id" element={<UpdateProduct />} />
-                <Route path="/adjust/:type" element={<AdjustQuantity />} />
-            </Routes>
-        </Router>
-    );
+  return (
+    <Router>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* Protected Routes */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/inventory"
+          element={
+            <ProtectedRoute>
+              <ProductList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add-product"
+          element={
+            <ProtectedRoute>
+              <AddProduct />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/update-product/:id"
+          element={
+            <ProtectedRoute>
+              <UpdateProduct />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/adjust/:type"
+          element={
+            <ProtectedRoute>
+              <AdjustQuantity />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;
