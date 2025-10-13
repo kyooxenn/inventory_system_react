@@ -194,7 +194,10 @@ export default function ProductList() {
                       <td className="px-4 py-3 font-medium text-gray-100">
                         {product.itemName}
                       </td>
-                      <td className="px-4 py-3 text-gray-400">
+                      <td
+                        className="px-4 py-3 text-gray-400 cursor-pointer select-text max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap"
+                        title={product.description}
+                      >
                         {product.description}
                       </td>
                       <td className="px-4 py-3 text-gray-400">
@@ -265,9 +268,9 @@ export default function ProductList() {
                     <h2 className="text-lg font-bold text-blue-400 mb-1">
                       {product.itemName}
                     </h2>
-                    <p className="text-gray-400 text-sm mb-2 line-clamp-3">
-                      {product.description}
-                    </p>
+                   <p className="text-gray-400 text-sm mb-2 max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap select-text" title={product.description}>
+                     {product.description}
+                   </p>
                     <div className="text-gray-400 text-sm space-y-1">
                       <div>
                         📁{" "}
