@@ -297,13 +297,12 @@ export default function ProductList() {
                   </div>
                 </div>
 
-                <div className="mt-4 flex justify-end gap-2">
+                <div className="mt-4 flex flex-wrap justify-end gap-2">
                   <Link to={`/update-product/${product.id}`}>
                     <button className="w-28 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600 font-semibold flex justify-center items-center">
                       ✏️ Edit
                     </button>
                   </Link>
-
                   <button
                     onClick={() => handleDelete(product.id)}
                     disabled={deleteLoadingId === product.id}
