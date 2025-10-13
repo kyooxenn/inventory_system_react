@@ -158,9 +158,6 @@ export default function ProductList() {
 
       {/* Content wrapper */}
       <div className="w-full max-w-5xl">
-        {loading && (
-          <div className="w-full mb-4 text-center text-gray-300">Loading...</div>
-        )}
 
         {/* Desktop Table */}
         <div className="hidden md:block mb-6">

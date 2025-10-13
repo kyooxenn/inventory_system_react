@@ -10,9 +10,11 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       if (isRegister) {
         await register(username, password);
@@ -25,15 +27,44 @@ export default function Login() {
       }
     } catch (err) {
       toast.error(isRegister ? "Username already exists" : "Invalid credentials");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Animation variants for transitions
   const formVariants = {
     initial: { opacity: 0, y: 20, scale: 0.98 },
     animate: { opacity: 1, y: 0, scale: 1 },
     exit: { opacity: 0, y: -20, scale: 0.98 },
   };
+
+  const InlineLoader = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="absolute inset-0 z-10 flex items-center justify-center bg-gray-900/80 rounded-3xl"
+    >
+      <motion.svg
+        initial={{ rotate: 0 }}
+        animate={{ rotate: 360 }}
+        transition={{
+          repeat: Infinity,
+          repeatType: "loop",
+          duration: 1.2,
+          ease: "linear",
+        }}
+        viewBox="0 0 100 100"
+        className="w-16 h-16 text-red-600"
+        fill="currentColor"
+      >
+        <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="5" fill="none" />
+        <circle cx="50" cy="20" r="5" />
+        <circle cx="75" cy="65" r="5" />
+        <circle cx="25" cy="65" r="5" />
+      </motion.svg>
+    </motion.div>
+  );
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-black px-4">
@@ -41,8 +72,10 @@ export default function Login() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="bg-gray-800/90 backdrop-blur-md p-10 rounded-3xl shadow-2xl w-full max-w-md border border-gray-700"
+        className="relative bg-gray-800/90 backdrop-blur-md p-10 rounded-3xl shadow-2xl w-full max-w-md border border-gray-700"
       >
+        <AnimatePresence>{loading && <InlineLoader />}</AnimatePresence>
+
         <AnimatePresence mode="wait">
           <motion.div
             key={isRegister ? "register" : "login"}
@@ -51,6 +84,7 @@ export default function Login() {
             animate="animate"
             exit="exit"
             transition={{ duration: 0.5, ease: "easeInOut" }}
+            className={loading ? "pointer-events-none opacity-50" : ""}
           >
             <div className="text-center mb-8">
               <motion.div
