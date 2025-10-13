@@ -210,14 +210,14 @@ export default function ProductList() {
                       <td className="px-4 py-3 text-center">
                         <div className="flex flex-wrap items-center justify-center gap-2">
                           <Link to={`/update-product/${product.id}`}>
-                            <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-2.5 py-1 rounded-md font-medium text-[0.75rem] leading-tight transition shadow-sm whitespace-nowrap">
+                            <button className="w-28 bg-yellow-500 hover:bg-yellow-600 text-white px-2.5 py-1 rounded-md font-medium text-[0.75rem] leading-tight transition shadow-sm whitespace-nowrap flex justify-center items-center">
                               ✏️ Edit
                             </button>
                           </Link>
                           <button
                             onClick={() => handleDelete(product.id)}
                             disabled={deleteLoadingId === product.id}
-                            className="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded-md font-medium text-[0.75rem] leading-tight transition disabled:opacity-50 shadow-sm whitespace-nowrap"
+                            className="w-28 bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded-md font-medium text-[0.75rem] leading-tight transition disabled:opacity-50 shadow-sm whitespace-nowrap flex justify-center items-center"
                           >
                             {deleteLoadingId === product.id ? (
                               <div className="flex items-center gap-1">
@@ -299,14 +299,14 @@ export default function ProductList() {
 
                 <div className="mt-4 flex gap-2">
                   <Link to={`/update-product/${product.id}`} className="flex-1">
-                    <button className="w-full bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600 font-semibold">
+                    <button className="w-28 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600 font-semibold flex justify-center items-center">
                       ✏️ Edit
                     </button>
                   </Link>
                   <button
                     onClick={() => handleDelete(product.id)}
                     disabled={deleteLoadingId === product.id}
-                    className="w-28 bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 disabled:opacity-50 font-semibold"
+                    className="w-28 bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 disabled:opacity-50 font-semibold flex justify-center items-center"
                   >
                     {deleteLoadingId === product.id ? (
                       <div className="flex items-center justify-center gap-1">
