@@ -297,24 +297,25 @@ export default function ProductList() {
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                <div className="mt-4 flex justify-end gap-2">
                   <Link to={`/update-product/${product.id}`}>
-                    <button className="w-28 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600 font-semibold flex justify-center items-center">
-                      ✏️ Edit
+                    <button className="w-28 h-10 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600 font-semibold flex justify-center items-center">
+                      <span className="inline-block w-full text-center">✏️ Edit</span>
                     </button>
                   </Link>
+
                   <button
                     onClick={() => handleDelete(product.id)}
                     disabled={deleteLoadingId === product.id}
-                    className="w-28 bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 disabled:opacity-50 font-semibold flex justify-center items-center"
+                    className="w-28 h-10 bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 disabled:opacity-50 font-semibold flex justify-center items-center"
                   >
                     {deleteLoadingId === product.id ? (
-                      <div className="flex items-center justify-center gap-1">
+                      <div className="flex items-center justify-center gap-1 w-full">
                         <Loader2 className="animate-spin h-4 w-4" />
                         <span>...</span>
                       </div>
                     ) : (
-                      "🗑 Delete"
+                      <span className="inline-block w-full text-center">🗑 Delete</span>
                     )}
                   </button>
                 </div>
