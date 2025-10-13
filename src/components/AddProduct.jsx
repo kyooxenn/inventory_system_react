@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { createProduct } from "/src/services/api.js";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
 const productTypes = ["Electronics", "Furniture", "Clothing", "Food", "Books"];
 const unitTypes = ["Piece", "Box", "Kg", "Pack", "Bottle"];
@@ -211,23 +212,10 @@ export default function AddProduct() {
               className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 disabled:opacity-50 font-semibold shadow-md transition"
             >
               {loading ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex items-center gap-2"
-                >
-                  <motion.div
-                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 1,
-                      ease: "linear",
-                    }}
-                  />
-                  <span className="animate-pulse">Saving...</span>
-                </motion.div>
+                <div className="flex items-center gap-2">
+                  <Loader2 className="animate-spin h-5 w-5" />
+                  <span>Saving...</span>
+                </div>
               ) : (
                 "💾 Save Product"
               )}
