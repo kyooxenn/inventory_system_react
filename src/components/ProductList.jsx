@@ -112,16 +112,17 @@ export default function ProductList() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-5xl bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-2xl shadow-lg p-6 mb-8"
+        className="w-full max-w-5xl bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-2xl shadow-lg p-4 mb-8"
       >
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+          {/* Search Input + Button */}
+          <div className="flex w-full md:flex-1 gap-2">
             <input
               type="text"
               placeholder="🔍 Search product..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-4 py-2.5 rounded-md w-full md:w-80 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-3 py-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSearch();
               }}
@@ -129,11 +130,11 @@ export default function ProductList() {
             <button
               onClick={handleSearch}
               disabled={loading}
-              className="bg-blue-600 text-white px-5 py-2.5 rounded-md hover:bg-blue-700 disabled:opacity-50 font-semibold shadow-md transition"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md disabled:opacity-50 font-medium shadow-sm transition text-sm whitespace-nowrap"
             >
               {loading ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="animate-spin h-5 w-5" />
+                <div className="flex items-center gap-1">
+                  <Loader2 className="animate-spin h-4 w-4" />
                   <span>Searching...</span>
                 </div>
               ) : (
@@ -142,16 +143,18 @@ export default function ProductList() {
             </button>
           </div>
 
-          <Link to="/add-product">
+          {/* Add Product Button */}
+          <Link to="/add-product" className="w-full md:w-auto">
             <motion.button
               whileTap={{ scale: 0.95 }}
-              className="bg-green-600 text-white px-5 py-2.5 rounded-md hover:bg-green-700 font-semibold shadow-md transition"
+              className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md font-medium shadow-sm transition text-sm w-full whitespace-nowrap"
             >
               ➕ Add Product
             </motion.button>
           </Link>
         </div>
       </motion.div>
+
 
       {/* Content wrapper */}
       <div className="w-full max-w-5xl">
@@ -205,20 +208,20 @@ export default function ProductList() {
                       </td>
                       <td className="px-4 py-3 text-gray-400">{product.unit}</td>
                       <td className="px-4 py-3 text-center">
-                        <div className="flex gap-2 justify-center">
+                        <div className="flex flex-wrap items-center justify-center gap-2">
                           <Link to={`/update-product/${product.id}`}>
-                            <button className="bg-yellow-500 text-white px-3 py-1.5 rounded-md hover:bg-yellow-600 font-semibold transition">
+                            <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-2.5 py-1 rounded-md font-medium text-[0.75rem] leading-tight transition shadow-sm whitespace-nowrap">
                               ✏️ Edit
                             </button>
                           </Link>
                           <button
                             onClick={() => handleDelete(product.id)}
                             disabled={deleteLoadingId === product.id}
-                            className="bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700 disabled:opacity-50 font-semibold transition"
+                            className="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded-md font-medium text-[0.75rem] leading-tight transition disabled:opacity-50 shadow-sm whitespace-nowrap"
                           >
                             {deleteLoadingId === product.id ? (
                               <div className="flex items-center gap-1">
-                                <Loader2 className="animate-spin h-4 w-4" />
+                                <Loader2 className="animate-spin h-3.5 w-3.5" />
                                 <span>Deleting...</span>
                               </div>
                             ) : (
