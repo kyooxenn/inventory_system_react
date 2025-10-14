@@ -1,22 +1,22 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { getAllProducts, deleteProduct, getProduct } from "/src/services/api.js";
 import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
-// ✅ Animated Empty State Component
+/* ---------------- Empty State ---------------- */
 const EmptyState = ({ message }) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
-    transition={{ duration: 0.6 }}
+    transition={{ duration: 0.5 }}
     className="flex flex-col items-center justify-center py-12 text-gray-500"
   >
     <motion.div
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      transition={{ delay: 0.2, type: 'spring', stiffness: 120 }}
+      transition={{ delay: 0.1, type: "spring", stiffness: 120 }}
       className="text-6xl mb-3"
     >
       📭
@@ -24,7 +24,7 @@ const EmptyState = ({ message }) => (
     <motion.p
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.4 }}
+      transition={{ delay: 0.3 }}
       className="italic text-gray-400 text-lg"
     >
       {message}
@@ -32,110 +32,104 @@ const EmptyState = ({ message }) => (
   </motion.div>
 );
 
+/* ---------------- Main Component ---------------- */
 export default function ProductList() {
   const [products, setProducts] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
-  const [selectAll, setSelectAll] = useState(false);
-  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(null);
 
-  useEffect(() => {
-    loadProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const hasSelection = selectedIds.length > 0;
 
-  const loadProducts = async () => {
+  /* ---------------- Load All Products ---------------- */
+  const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const allProducts = await getAllProducts();
-      setProducts(allProducts || []);
-      setFilteredProducts(allProducts || []);
+      const data = await getAllProducts();
+      setProducts(data || []);
+      setFiltered(data || []);
     } catch {
       toast.error("Failed to load products.");
-      setProducts([]);
-      setFilteredProducts([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  /* ---------------- Search Products ---------------- */
   const handleSearch = useCallback(async () => {
     setLoading(true);
     try {
-      if (!searchQuery.trim()) {
-        setFilteredProducts(products);
-      } else {
-        const results = await getProduct(searchQuery);
-        setFilteredProducts(results && results.length > 0 ? results : []);
-        if (!results || results.length === 0)
-          toast("No matching products found.");
-      }
+      if (!searchQuery.trim()) return setFiltered(products);
+
+      const results = await getProduct(searchQuery.trim());
+      setFiltered(results?.length ? results : []);
+      if (!results?.length) toast("No matching products found.");
     } catch {
       toast.error("Search failed.");
-      setFilteredProducts([]);
     } finally {
       setLoading(false);
     }
   }, [searchQuery, products]);
 
+  /* ---------------- Delete Logic ---------------- */
   const handleDelete = async (id) => {
     if (!confirm("Delete this product?")) return;
-    setDeleteLoadingId(id);
+    setDeleting(id);
     try {
       await deleteProduct(id);
       toast.success("Product deleted successfully!");
-      setSelectedIds((prev) => prev.filter((pid) => pid !== id)); // ✅ remove from selection
+      setSelectedIds((prev) => prev.filter((pid) => pid !== id));
       await loadProducts();
     } catch {
       toast.error("Failed to delete product.");
     } finally {
-      setDeleteLoadingId(null);
+      setDeleting(null);
     }
-  };
-
-  const handleSelectAll = () => {
-    if (selectAll) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(filteredProducts.map((p) => p.id));
-    }
-    setSelectAll(!selectAll);
-  };
-
-  const handleCheckboxChange = (id) => {
-    setSelectedIds((prev) =>
-      prev.includes(id)
-        ? prev.filter((pid) => pid !== id)
-        : [...prev, id]
-    );
   };
 
   const handleBulkDelete = async () => {
-    if (selectedIds.length === 0) {
-      toast("No products selected.");
-      return;
-    }
+    if (!hasSelection) return toast("No products selected.");
     if (!confirm(`Delete ${selectedIds.length} selected product(s)?`)) return;
 
-    setBulkDeleting(true);
+    setLoading(true);
     try {
-      for (const id of selectedIds) {
-        await deleteProduct(id);
-      }
+      await Promise.all(selectedIds.map((id) => deleteProduct(id)));
       toast.success(`${selectedIds.length} product(s) deleted.`);
-      await loadProducts();
       setSelectedIds([]);
-      setSelectAll(false);
+      await loadProducts();
     } catch {
       toast.error("Failed to delete selected products.");
     } finally {
-      setBulkDeleting(false);
+      setLoading(false);
     }
   };
 
+  /* ---------------- Checkbox Logic ---------------- */
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) =>
+      prev.length === filtered.length ? [] : filtered.map((p) => p.id)
+    );
+  };
+
+  const toggleSelect = (id) =>
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+
+  /* ---------------- Derived Values ---------------- */
+  const emptyMessage = useMemo(
+    () =>
+      searchQuery ? "No matching products found." : "No products available.",
+    [searchQuery]
+  );
+
+  /* ---------------- Render ---------------- */
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center py-10 px-4">
       {/* Header */}
@@ -151,25 +145,23 @@ export default function ProductList() {
         </Link>
       </div>
 
-      {/* Search, Add, and Bulk Delete */}
+      {/* Search / Add / Bulk Delete */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.4 }}
         className="w-full max-w-5xl bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-2xl shadow-lg p-4 mb-8"
       >
         <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-          {/* Search Input + Button */}
+          {/* Search Bar */}
           <div className="flex w-full md:flex-1 gap-2">
             <input
               type="text"
               placeholder="🔍 Search product..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               className="bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-3 py-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSearch();
-              }}
             />
             <button
               onClick={handleSearch}
@@ -177,38 +169,33 @@ export default function ProductList() {
               className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md disabled:opacity-50 font-medium shadow-sm transition text-sm whitespace-nowrap"
             >
               {loading ? (
-                <div className="flex items-center gap-1">
-                  <Loader2 className="animate-spin h-4 w-4" />
-                  <span>Searching...</span>
-                </div>
+                <Loader2 className="animate-spin h-4 w-4 inline-block mr-1" />
               ) : (
                 "Search"
               )}
             </button>
           </div>
 
-          {/* Buttons: Add + Bulk Delete */}
+          {/* Add + Bulk Delete */}
           <div className="flex gap-2 w-full md:w-auto">
             <Link to="/add-product" className="flex-1 md:flex-none">
               <motion.button
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.96 }}
                 className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md font-medium shadow-sm transition text-sm w-full whitespace-nowrap"
               >
                 ➕ Add Product
               </motion.button>
             </Link>
-            {selectedIds.length > 0 && (
+
+            {hasSelection && (
               <motion.button
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={handleBulkDelete}
-                disabled={bulkDeleting}
+                disabled={loading}
                 className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md font-medium shadow-sm transition text-sm w-full md:w-auto disabled:opacity-50 whitespace-nowrap"
               >
-                {bulkDeleting ? (
-                  <div className="flex items-center gap-1">
-                    <Loader2 className="animate-spin h-4 w-4" />
-                    <span>Deleting...</span>
-                  </div>
+                {loading ? (
+                  <Loader2 className="animate-spin h-4 w-4 inline-block mr-1" />
                 ) : (
                   `🗑 Delete Selected (${selectedIds.length})`
                 )}
@@ -218,238 +205,143 @@ export default function ProductList() {
         </div>
       </motion.div>
 
-
-      {/* Content wrapper */}
-      <div className="w-full max-w-5xl">
-
-        {/* Desktop Table */}
-        <div className="hidden md:block mb-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-2xl shadow-lg overflow-x-auto overflow-y-auto w-full max-w-screen-xl mx-auto"
-            style={{ minHeight: '400px', maxHeight: '300px' }}
-          >
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-800 text-gray-300 uppercase tracking-wide">
-                <tr>
-                  <th className="px-3 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={selectAll}
-                      onChange={handleSelectAll}
-                      className="accent-blue-500 w-4 h-4"
-                    />
-                  </th>
-                  <th className="px-4 py-3 text-left">Item Name</th>
-                  <th className="px-4 py-3 text-left">Description</th>
-                  <th className="px-4 py-3 text-left">Category</th>
-                  <th className="px-4 py-3 text-left">Quantity</th>
-                  <th className="px-4 py-3 text-left">Price</th>
-                  <th className="px-4 py-3 text-left">Unit</th>
-                  <th className="px-4 py-3 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {filteredProducts.length > 0 ? (
-                  filteredProducts.map((product) => (
-                    <motion.tr
-                      key={product.id}
-                      whileHover={{ scale: 1.01 }}
-                      transition={{ duration: 0.2 }}
-                      className="hover:bg-gray-800 transition"
-                    >
-                      <td className="px-3 py-3 text-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(product.id)}
-                          onChange={() => handleCheckboxChange(product.id)}
-                          className="accent-blue-500 w-4 h-4"
-                        />
-                      </td>
-                      <td className="px-4 py-3 font-medium text-gray-100">
-                        {product.itemName}
-                      </td>
-                      <td
-                        className="px-4 py-3 text-gray-400 cursor-pointer select-text max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap"
-                        title={product.description}
-                      >
-                        {product.description}
-                      </td>
-                      <td className="px-4 py-3 text-gray-400">
-                        {product.category}
-                      </td>
-                      <td className="px-4 py-3 text-gray-400">
-                        {product.quantity}
-                      </td>
-                      <td className="px-4 py-3 text-gray-400">
-                        ₱{product.unitPrice}
-                      </td>
-                      <td className="px-4 py-3 text-gray-400">{product.unit}</td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex flex-wrap items-center justify-center gap-2">
-                          <Link to={`/update-product/${product.id}`}>
-                            <button className="w-20 bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded-md font-medium text-xs leading-tight transition shadow-sm whitespace-nowrap flex justify-center items-center gap-1">
-                              ✏️
-                              <span>Edit</span>
-                            </button>
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(product.id)}
-                            disabled={deleteLoadingId === product.id}
-                            className="w-20 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-md font-medium text-xs leading-tight transition disabled:opacity-50 shadow-sm whitespace-nowrap flex justify-center items-center gap-1"
-                          >
-                            {deleteLoadingId === product.id ? (
-                              <div className="flex items-center gap-1">
-                                <Loader2 className="animate-spin h-3 w-3" />
-                                <span className="text-xs">Deleting</span>
-                              </div>
-                            ) : (
-                              <>
-                                🗑 <span>Delete</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7">
-                      <EmptyState
-                        message={
-                          searchQuery
-                            ? "No matching products found."
-                            : "No products available."
-                        }
+      {/* Product Table (Desktop) */}
+      <div className="hidden md:block w-full max-w-5xl">
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-2xl shadow-lg overflow-x-auto"
+          style={{ maxHeight: "400px" }}
+        >
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-800 text-gray-300 uppercase tracking-wide">
+              <tr>
+                <th className="px-3 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.length === filtered.length && filtered.length > 0}
+                    onChange={toggleSelectAll}
+                    className="accent-blue-500 w-4 h-4"
+                  />
+                </th>
+                {["Item Name", "Description", "Category", "Quantity", "Price", "Unit", "Actions"].map((header) => (
+                  <th key={header} className="px-4 py-3 text-left">{header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-700">
+              {filtered.length ? (
+                filtered.map((p) => (
+                  <motion.tr
+                    key={p.id}
+                    whileHover={{ scale: 1.01 }}
+                    transition={{ duration: 0.2 }}
+                    className="hover:bg-gray-800 transition"
+                  >
+                    <td className="px-3 py-3 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(p.id)}
+                        onChange={() => toggleSelect(p.id)}
+                        className="accent-blue-500 w-4 h-4"
                       />
                     </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </motion.div>
-        </div>
+                    <td className="px-4 py-3 font-medium text-gray-100">{p.itemName}</td>
+                    <td className="px-4 py-3 text-gray-400 truncate max-w-[240px]" title={p.description}>
+                      {p.description}
+                    </td>
+                    <td className="px-4 py-3 text-gray-400">{p.category}</td>
+                    <td className="px-4 py-3 text-gray-400">{p.quantity}</td>
+                    <td className="px-4 py-3 text-gray-400">₱{p.unitPrice}</td>
+                    <td className="px-4 py-3 text-gray-400">{p.unit}</td>
+                    <td className="px-4 py-3 text-center flex justify-center gap-2">
+                      <Link to={`/update-product/${p.id}`}>
+                        <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-xs font-medium flex items-center gap-1">
+                          ✏️ Edit
+                        </button>
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(p.id)}
+                        disabled={deleting === p.id}
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-medium flex items-center gap-1 disabled:opacity-50"
+                      >
+                        {deleting === p.id ? (
+                          <Loader2 className="animate-spin h-3 w-3" />
+                        ) : (
+                          "🗑 Delete"
+                        )}
+                      </button>
+                    </td>
+                  </motion.tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8">
+                    <EmptyState message={emptyMessage} />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </motion.div>
+      </div>
 
-        {/* ✅ Mobile Cards with Select */}
-        <div className="md:hidden grid gap-4 mb-6">
-          {filteredProducts.length > 0 ? (
-            filteredProducts.map((product) => (
-              <motion.div
-                key={product.id}
-                whileHover={{ scale: 1.01 }}
-                transition={{ duration: 0.12 }}
-                className="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-md"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(product.id)}
-                      onChange={() => handleCheckboxChange(product.id)}
-                      className="accent-blue-500 w-5 h-5"
-                    />
-                    <h2 className="text-lg font-bold text-blue-400">
-                      {product.itemName}
-                    </h2>
-                  </div>
-                </div>
-
-                <p
-                  className="text-gray-400 text-sm mb-2 max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap select-text"
-                  title={product.description}
-                >
-                  {product.description}
-                </p>
-
-                <div className="text-gray-400 text-sm space-y-1">
-                  <div>
-                    📁{" "}
-                    <span className="font-medium text-gray-200">
-                      {product.category}
-                    </span>
-                  </div>
-                  <div>
-                    📦{" "}
-                    <span className="font-medium text-gray-200">
-                      Qty: {product.quantity}
-                    </span>
-                  </div>
-                  <div>
-                    💰{" "}
-                    <span className="font-medium text-gray-200">
-                      ₱{product.unitPrice}
-                    </span>
-                  </div>
-                  <div>
-                    📐{" "}
-                    <span className="font-medium text-gray-200">
-                      {product.unit}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex justify-end gap-2">
-                  <Link to={`/update-product/${product.id}`}>
-                    <button className="w-28 h-10 bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600 font-semibold flex justify-center items-center">
-                      <span className="inline-block w-full text-center">✏️ Edit</span>
-                    </button>
-                  </Link>
-
-                  <button
-                    onClick={() => handleDelete(product.id)}
-                    disabled={deleteLoadingId === product.id}
-                    className="w-28 h-10 bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 disabled:opacity-50 font-semibold flex justify-center items-center"
-                  >
-                    {deleteLoadingId === product.id ? (
-                      <div className="flex items-center justify-center gap-1 w-full">
-                        <Loader2 className="animate-spin h-4 w-4" />
-                        <span>...</span>
-                      </div>
-                    ) : (
-                      <span className="inline-block w-full text-center">🗑 Delete</span>
-                    )}
-                  </button>
-                </div>
-              </motion.div>
-            ))
-          ) : (
-            <EmptyState
-              message={
-                searchQuery
-                  ? "No matching products found."
-                  : "No products available."
-              }
-            />
-          )}
-        </div>
-
-        {/* Reset Search */}
-        {filteredProducts.length === 0 && searchQuery && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mt-2 text-center"
-          >
-            <button
-              onClick={() => {
-                setSearchQuery("");
-                setFilteredProducts(products);
-              }}
-              className="text-blue-400 hover:underline font-medium"
+      {/* Mobile Cards */}
+      <div className="md:hidden w-full max-w-5xl grid gap-4 mt-4">
+        {filtered.length ? (
+          filtered.map((p) => (
+            <motion.div
+              key={p.id}
+              whileHover={{ scale: 1.01 }}
+              transition={{ duration: 0.15 }}
+              className="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-md"
             >
-              🔄 Reset Search
-            </button>
-          </motion.div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(p.id)}
+                    onChange={() => toggleSelect(p.id)}
+                    className="accent-blue-500 w-5 h-5"
+                  />
+                  <h2 className="text-lg font-bold text-blue-400">{p.itemName}</h2>
+                </div>
+              </div>
+              <p className="text-gray-400 text-sm mt-2 truncate" title={p.description}>
+                {p.description}
+              </p>
+              <div className="text-gray-400 text-sm mt-2 space-y-1">
+                <div>📁 {p.category}</div>
+                <div>📦 Qty: {p.quantity}</div>
+                <div>💰 ₱{p.unitPrice}</div>
+                <div>📐 {p.unit}</div>
+              </div>
+              <div className="mt-4 flex justify-end gap-2">
+                <Link to={`/update-product/${p.id}`}>
+                  <button className="w-24 bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded font-semibold text-sm">
+                    ✏️ Edit
+                  </button>
+                </Link>
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  disabled={deleting === p.id}
+                  className="w-24 bg-red-600 hover:bg-red-700 text-white py-2 rounded font-semibold text-sm disabled:opacity-50"
+                >
+                  {deleting === p.id ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : "🗑 Delete"}
+                </button>
+              </div>
+            </motion.div>
+          ))
+        ) : (
+          <EmptyState message={emptyMessage} />
         )}
       </div>
 
       {/* Footer */}
       <motion.footer
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
         className="mt-10 text-gray-500 text-sm text-center"
       >
