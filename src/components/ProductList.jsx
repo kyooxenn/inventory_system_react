@@ -38,6 +38,9 @@ export default function ProductList() {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   useEffect(() => {
     loadProducts();
@@ -84,11 +87,52 @@ export default function ProductList() {
     try {
       await deleteProduct(id);
       toast.success("Product deleted successfully!");
+      setSelectedIds((prev) => prev.filter((pid) => pid !== id)); // ✅ remove from selection
       await loadProducts();
     } catch {
       toast.error("Failed to delete product.");
     } finally {
       setDeleteLoadingId(null);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredProducts.map((p) => p.id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const handleCheckboxChange = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((pid) => pid !== id)
+        : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) {
+      toast("No products selected.");
+      return;
+    }
+    if (!confirm(`Delete ${selectedIds.length} selected product(s)?`)) return;
+
+    setBulkDeleting(true);
+    try {
+      for (const id of selectedIds) {
+        await deleteProduct(id);
+      }
+      toast.success(`${selectedIds.length} product(s) deleted.`);
+      await loadProducts();
+      setSelectedIds([]);
+      setSelectAll(false);
+    } catch {
+      toast.error("Failed to delete selected products.");
+    } finally {
+      setBulkDeleting(false);
     }
   };
 
@@ -107,7 +151,7 @@ export default function ProductList() {
         </Link>
       </div>
 
-      {/* Search & Add Product */}
+      {/* Search, Add, and Bulk Delete */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -143,15 +187,34 @@ export default function ProductList() {
             </button>
           </div>
 
-          {/* Add Product Button */}
-          <Link to="/add-product" className="w-full md:w-auto">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md font-medium shadow-sm transition text-sm w-full whitespace-nowrap"
-            >
-              ➕ Add Product
-            </motion.button>
-          </Link>
+          {/* Buttons: Add + Bulk Delete */}
+          <div className="flex gap-2 w-full md:w-auto">
+            <Link to="/add-product" className="flex-1 md:flex-none">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md font-medium shadow-sm transition text-sm w-full whitespace-nowrap"
+              >
+                ➕ Add Product
+              </motion.button>
+            </Link>
+            {selectedIds.length > 0 && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleBulkDelete}
+                disabled={bulkDeleting}
+                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md font-medium shadow-sm transition text-sm w-full md:w-auto disabled:opacity-50 whitespace-nowrap"
+              >
+                {bulkDeleting ? (
+                  <div className="flex items-center gap-1">
+                    <Loader2 className="animate-spin h-4 w-4" />
+                    <span>Deleting...</span>
+                  </div>
+                ) : (
+                  `🗑 Delete Selected (${selectedIds.length})`
+                )}
+              </motion.button>
+            )}
+          </div>
         </div>
       </motion.div>
 
@@ -171,6 +234,14 @@ export default function ProductList() {
             <table className="min-w-full text-sm">
               <thead className="bg-gray-800 text-gray-300 uppercase tracking-wide">
                 <tr>
+                  <th className="px-3 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={selectAll}
+                      onChange={handleSelectAll}
+                      className="accent-blue-500 w-4 h-4"
+                    />
+                  </th>
                   <th className="px-4 py-3 text-left">Item Name</th>
                   <th className="px-4 py-3 text-left">Description</th>
                   <th className="px-4 py-3 text-left">Category</th>
@@ -189,6 +260,14 @@ export default function ProductList() {
                       transition={{ duration: 0.2 }}
                       className="hover:bg-gray-800 transition"
                     >
+                      <td className="px-3 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(product.id)}
+                          onChange={() => handleCheckboxChange(product.id)}
+                          className="accent-blue-500 w-4 h-4"
+                        />
+                      </td>
                       <td className="px-4 py-3 font-medium text-gray-100">
                         {product.itemName}
                       </td>
