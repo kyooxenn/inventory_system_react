@@ -163,8 +163,10 @@ export default function Login() {
           transition={{ delay: 0.5 }}
           className="text-gray-500 text-xs text-center mt-6"
         >
-          © 2025 Norbs Inventory |{" "}
-          <span className="text-blue-400">Dashboard Theme</span>
+          © 2025 Norbs | Built with{" "}
+          <span className="text-blue-400">React</span> +{" "}
+          <span className="text-teal-400">Tailwind</span> +{" "}
+          <span className="text-pink-400">Motion</span>
         </motion.footer>
       </motion.div>
     </div>
