@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAllProducts } from "/src/services/api.js";
 import { logout } from "/src/services/auth.js";
@@ -9,55 +9,61 @@ import { LogOut } from "lucide-react";
 export default function Dashboard() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [dateTime, setDateTime] = useState(new Date());
+  const [dateTime, setDateTime] = useState(() => new Date());
+  const [username, setUsername] = useState(() => localStorage.getItem("username") || "");
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
 
-  useEffect(() => {
-    loadProducts();
-
-    // ✅ Load username from localStorage
-    const storedUser = localStorage.getItem("username");
-    if (storedUser) {
-      setUsername(storedUser);
-    }
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => setDateTime(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadProducts = async () => {
+  /** ✅ Load products once */
+  const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
       const all = await getAllProducts();
       setProducts(all);
     } catch {
       toast.error("Failed to load inventory data.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, []);
 
-  const handleLogout = () => {
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  /** ✅ Update date/time every second */
+  useEffect(() => {
+    const interval = setInterval(() => setDateTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  /** ✅ Derived values with useMemo to prevent re-calculation on every render */
+  const { totalValue, totalQuantity, totalItems } = useMemo(() => {
+    let value = 0;
+    let qty = 0;
+    for (const p of products) {
+      value += p.unitPrice * p.quantity;
+      qty += p.quantity;
+    }
+    return {
+      totalValue: value,
+      totalQuantity: qty,
+      totalItems: products.length,
+    };
+  }, [products]);
+
+  /** ✅ Logout handler */
+  const handleLogout = useCallback(() => {
     logout();
     localStorage.removeItem("username");
     toast.success("You have been logged out.");
     navigate("/login");
-  };
-
-  const totalValue = products.reduce(
-    (sum, p) => sum + p.unitPrice * p.quantity,
-    0
-  );
-  const totalQuantity = products.reduce((sum, p) => sum + p.quantity, 0);
-  const totalItems = products.length;
+  }, [navigate]);
 
   return (
     <>
       {/* ✅ Top Bar */}
       <div className="relative w-full bg-gray-900 py-2 shadow-md">
-        {/* Welcome message - upper left */}
+        {/* Welcome Message */}
         {username && (
           <motion.div
             initial={{ opacity: 0, x: -10 }}
@@ -69,7 +75,7 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* Logout text with icon - upper right */}
+        {/* Logout */}
         <div className="absolute top-2 right-3 z-10">
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -84,9 +90,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ✅ Main dashboard container */}
+      {/* ✅ Dashboard Main */}
       <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between pb-24">
-        {/* Header */}
         <div className="px-4 pt-12 text-center">
           <h1 className="text-4xl font-extrabold mb-2 drop-shadow-lg text-blue-400">
             🧭 Dashboard Overview
@@ -95,7 +100,7 @@ export default function Dashboard() {
             Monitor and manage your inventory in real time.
           </p>
 
-          {/* ✅ Live Date & Time */}
+          {/* Live Date/Time */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -115,95 +120,50 @@ export default function Dashboard() {
           </motion.p>
         </div>
 
-        {/* Summary Cards */}
+        {/* ✅ Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-4 mt-10">
-          {/* Total Inventory Value */}
-          <motion.div
-            whileHover={{ scale: 1.03 }}
-            transition={{ type: "spring", stiffness: 200 }}
-            className="bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-700 flex justify-between items-center"
-          >
-            <div>
-              <h3 className="text-gray-400 text-sm uppercase font-semibold">
-                Total Inventory Value
-              </h3>
-              <p className="text-3xl font-bold mt-2 text-blue-400">
-                ₱{totalValue.toLocaleString("en-PH", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </p>
-            </div>
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/4151/4151061.png"
-              alt="Money"
-              className="w-16 h-16 opacity-80"
-            />
-          </motion.div>
+          {/* Inventory Value */}
+          <DashboardCard
+            title="Total Inventory Value"
+            value={`₱${totalValue.toLocaleString("en-PH", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}`}
+            img="https://cdn-icons-png.flaticon.com/512/4151/4151061.png"
+            textColor="text-blue-400"
+          />
 
-          {/* Total Quantity */}
-          <motion.div
-            whileHover={{ scale: 1.03 }}
-            transition={{ type: "spring", stiffness: 200 }}
-            className="bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-700 flex justify-between items-center"
-          >
-            <div>
-              <h3 className="text-gray-400 text-sm uppercase font-semibold">
-                Total Inventory Quantity
-              </h3>
-              <p className="text-3xl font-bold mt-2 text-green-400">
-                {totalQuantity} Units
-              </p>
-              <p className="text-gray-400 text-sm">{totalItems} Items</p>
-            </div>
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/9964/9964372.png"
-              alt="Inventory"
-              className="w-16 h-16 opacity-80"
-            />
-          </motion.div>
+          {/* Quantity */}
+          <DashboardCard
+            title="Total Inventory Quantity"
+            value={`${totalQuantity} Units`}
+            subtext={`${totalItems} Items`}
+            img="https://cdn-icons-png.flaticon.com/512/9964/9964372.png"
+            textColor="text-green-400"
+          />
         </div>
 
-        {/* Action Buttons */}
+        {/* ✅ Action Buttons */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-4 mt-8">
-          <Link to="/add-product">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              className="bg-green-600 hover:bg-green-700 text-white rounded-lg py-2 px-2 font-medium shadow-md w-full h-14 flex items-center justify-center text-center text-[0.75rem] leading-snug"
-            >
-              ➕ Add Product
-            </motion.button>
-          </Link>
-
-          <Link to="/inventory">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-2 font-medium shadow-md w-full h-14 flex items-center justify-center text-center text-[0.75rem] leading-snug"
-            >
-              📦 View Inventory
-            </motion.button>
-          </Link>
-
-          <Link to="/adjust/increase">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg py-2 px-2 font-medium shadow-md w-full h-14 flex items-center justify-center text-center text-[0.75rem] leading-snug"
-            >
-              ⬆️ Increase Quantity
-            </motion.button>
-          </Link>
-
-          <Link to="/adjust/decrease">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              className="bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 px-2 font-medium shadow-md w-full h-14 flex items-center justify-center text-center text-[0.75rem] leading-snug"
-            >
-              ⬇️ Decrease Quantity
-            </motion.button>
-          </Link>
+          {[
+            { path: "/add-product", color: "bg-green-600 hover:bg-green-700", text: "➕ Add Product" },
+            { path: "/inventory", color: "bg-blue-600 hover:bg-blue-700", text: "📦 View Inventory" },
+            { path: "/adjust/increase", color: "bg-yellow-500 hover:bg-yellow-600", text: "⬆️ Increase Quantity" },
+            { path: "/adjust/decrease", color: "bg-red-600 hover:bg-red-700", text: "⬇️ Decrease Quantity" },
+          ].map(({ path, color, text }) => (
+            <Link key={path} to={path}>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                className={`${color} text-white rounded-lg py-2 px-2 font-medium shadow-md w-full h-14
+                            flex items-center justify-center text-center text-[0.75rem] leading-snug`}
+              >
+                {text}
+              </motion.button>
+            </Link>
+          ))}
         </div>
 
-        {/* Footer */}
+        {/* ✅ Footer */}
         <motion.footer
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -219,3 +179,19 @@ export default function Dashboard() {
     </>
   );
 }
+
+/** ✅ Reusable Dashboard Card component */
+const DashboardCard = ({ title, value, subtext, img, textColor }) => (
+  <motion.div
+    whileHover={{ scale: 1.03 }}
+    transition={{ type: "spring", stiffness: 200 }}
+    className="bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-700 flex justify-between items-center"
+  >
+    <div>
+      <h3 className="text-gray-400 text-sm uppercase font-semibold">{title}</h3>
+      <p className={`text-3xl font-bold mt-2 ${textColor}`}>{value}</p>
+      {subtext && <p className="text-gray-400 text-sm">{subtext}</p>}
+    </div>
+    <img src={img} alt={title} className="w-16 h-16 opacity-80" />
+  </motion.div>
+);
