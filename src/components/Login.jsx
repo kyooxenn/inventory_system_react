@@ -44,9 +44,9 @@ export default function Login() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-10 flex items-center justify-center bg-gray-900/80 rounded-3xl"
+      className="absolute inset-0 z-10 flex items-center justify-center bg-gray-900/80 rounded-2xl"
     >
-      <motion.svg
+      <motion.div
         initial={{ rotate: 0 }}
         animate={{ rotate: 360 }}
         transition={{
@@ -55,25 +55,18 @@ export default function Login() {
           duration: 1.2,
           ease: "linear",
         }}
-        viewBox="0 0 100 100"
-        className="w-16 h-16 text-red-600"
-        fill="currentColor"
-      >
-        <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="5" fill="none" />
-        <circle cx="50" cy="20" r="5" />
-        <circle cx="75" cy="65" r="5" />
-        <circle cx="25" cy="65" r="5" />
-      </motion.svg>
+        className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
+      />
     </motion.div>
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-black px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white px-4">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="relative bg-gray-800/90 backdrop-blur-md p-10 rounded-3xl shadow-2xl w-full max-w-md border border-gray-700"
+        className="relative bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-8 w-full max-w-md"
       >
         <AnimatePresence>{loading && <InlineLoader />}</AnimatePresence>
 
@@ -84,60 +77,60 @@ export default function Login() {
             initial="initial"
             animate="animate"
             exit="exit"
-            transition={{ duration: 0.5, ease: "easeInOut" }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
             className={loading ? "pointer-events-none opacity-50" : ""}
           >
+            {/* Icon + Title */}
             <div className="text-center mb-8">
               <motion.div
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                transition={{ type: "spring", stiffness: 300 }}
-                className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 text-white mb-3"
+                whileHover={{ scale: 1.1, rotate: 3 }}
+                className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 shadow-lg shadow-blue-700/40 text-white mb-3"
               >
                 {isRegister ? <UserPlus size={28} /> : <LogIn size={28} />}
               </motion.div>
-              <h2 className="text-3xl font-bold text-white mb-1">
+              <h2 className="text-3xl font-bold text-blue-400 mb-1">
                 {isRegister ? "Create Account" : "Welcome Back"}
               </h2>
               <p className="text-gray-400 text-sm">
                 {isRegister
-                  ? "Join our community and manage your inventory smarter."
-                  : "Sign in to continue managing your inventory."}
+                  ? "Join our platform and manage your inventory smarter."
+                  : "Sign in to access your dashboard."}
               </p>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Username"
-                  className="w-full bg-gray-900/70 border border-gray-700 text-white placeholder-gray-400
-                             p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                type="text"
+                placeholder="Username"
+                className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-400
+                           p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
 
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="w-full bg-gray-900/70 border border-gray-700 text-white placeholder-gray-400
-                             p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+              <input
+                type="password"
+                placeholder="Password"
+                className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-400
+                           p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
 
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 transition text-white p-3 rounded-xl font-semibold shadow-lg"
-                >
-                  {isRegister ? "Register" : "Login"}
-                </motion.button>
-              </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 transition text-white p-3 rounded-lg font-semibold shadow-md shadow-blue-700/30"
+              >
+                {isRegister ? "Register" : "Login"}
+              </motion.button>
             </form>
 
+            {/* Toggle */}
             <div className="text-center mt-6 text-gray-400">
               {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
               <motion.button
@@ -151,6 +144,16 @@ export default function Login() {
             </div>
           </motion.div>
         </AnimatePresence>
+
+        {/* Footer */}
+        <motion.footer
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="text-gray-500 text-xs text-center mt-6"
+        >
+          © 2025 Norbs Inventory | <span className="text-blue-400">Dashboard Theme</span>
+        </motion.footer>
       </motion.div>
     </div>
   );
