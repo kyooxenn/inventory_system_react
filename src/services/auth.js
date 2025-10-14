@@ -3,7 +3,7 @@ import axios from "axios";
 //const API_BASE_URL = "http://localhost:8080/api/auth"; // adjust if needed
 
 //deploy online render
-const API_BASE_URL = "https://inventory-system-dair.onrender.com/api/auth";
+const API_BASE_URL = "https://inventory-system-springboot-sea.onrender.com/api/auth";
 
 export const login = async (username, password) => {
   const response = await axios.post(`${API_BASE_URL}/login`, { username, password });
