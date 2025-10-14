@@ -4,71 +4,88 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base font and background */
+/* ==============================
+   Base Styles
+============================== */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0f172a; /* Tailwind's slate-950 */
+  color: rgba(255, 255, 255, 0.9);
+  background-color: #0f172a; /* Tailwind slate-950 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Links */
-a {
-  font-weight: 500;
-  color: #60a5fa; /* Tailwind blue-400 */
-  text-decoration: none;
-}
-a:hover {
-  color: #3b82f6; /* Tailwind blue-500 */
-}
-
-/* Layout */
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
   width: 100%;
   height: 100%;
-  display: block;
   background-color: #0f172a;
+  color: #e2e8f0; /* Tailwind slate-200 */
 }
 
-/* Headings */
+/* ==============================
+   Links
+============================== */
+a {
+  font-weight: 500;
+  color: #60a5fa; /* blue-400 */
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+a:hover {
+  color: #3b82f6; /* blue-500 */
+}
+
+/* ==============================
+   Typography
+============================== */
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  color: #f8fafc;
+}
+
 h1 {
-  font-size: 3em;
+  font-size: 2.5rem;
   line-height: 1.1;
   text-align: center;
   margin-bottom: 1rem;
 }
 
-/* Fix input/button vertical alignment */
+/* ==============================
+   Form Inputs
+============================== */
 input,
-button {
-  line-height: normal;
-}
-
-/* ✅ Global input styling */
-input {
+select,
+textarea {
   border-radius: 0.5rem;
-  background-color: #1e293b; /* Tailwind gray-800 */
-  color: #fff;
-  border: 1px solid #334155; /* Tailwind gray-700 */
+  background-color: #1e293b; /* gray-800 */
+  color: #f8fafc;
+  border: 1px solid #334155; /* gray-700 */
   padding: 0.6em 1em;
   font-size: 1rem;
-  box-sizing: border-box;
   width: 100%;
+  box-sizing: border-box;
   transition: all 0.25s ease;
 }
-input:focus {
+
+input:focus,
+select:focus,
+textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px #3b82f6;
+  border-color: #3b82f6; /* blue-500 */
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 }
 
-/* ✅ Button styling — fixed size & responsive */
+/* ==============================
+   Buttons
+============================== */
 button {
   border-radius: 0.6rem;
   padding: 0.7em 1.4em;
@@ -80,12 +97,14 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
+  min-height: 44px;
   min-width: 100px;
   box-sizing: border-box;
+  color: #fff;
+  border: none;
 }
 
-/* Primary (blue) button */
+/* --- Primary (Blue) --- */
 button.bg-blue-600 {
   background-color: #2563eb;
 }
@@ -93,7 +112,7 @@ button.bg-blue-600:hover {
   background-color: #1d4ed8;
 }
 
-/* Success (green) button */
+/* --- Success (Green) --- */
 button.bg-green-600 {
   background-color: #16a34a;
 }
@@ -101,7 +120,7 @@ button.bg-green-600:hover {
   background-color: #15803d;
 }
 
-/* Warning (yellow) button */
+/* --- Warning (Yellow) --- */
 button.bg-yellow-500 {
   background-color: #eab308;
   color: #000;
@@ -110,7 +129,7 @@ button.bg-yellow-500:hover {
   background-color: #ca8a04;
 }
 
-/* Danger (red) button */
+/* --- Danger (Red) --- */
 button.bg-red-600 {
   background-color: #dc2626;
 }
@@ -118,30 +137,66 @@ button.bg-red-600:hover {
   background-color: #b91c1c;
 }
 
-/* Disabled buttons */
+/* Disabled State */
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-/* Responsive layout fix */
+/* ==============================
+   Layout Utility Classes
+============================== */
 .dashboard-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   padding: 1rem;
+  width: 100%;
 }
 
-/* Light mode fallback */
+/* ==============================
+   Mobile / Responsive Fixes
+============================== */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  .dashboard-container {
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem;
+  }
+
+  input,
+  button {
+    font-size: 0.95rem;
+  }
+
+  button {
+    min-height: 42px;
+  }
+}
+
+/* ==============================
+   Light Mode
+============================== */
 @media (prefers-color-scheme: light) {
   :root {
     color: #111;
     background-color: #fff;
   }
 
-  input {
+  body {
+    background-color: #f8fafc;
+    color: #111;
+  }
+
+  input,
+  select,
+  textarea {
     background-color: #f1f5f9;
     color: #111;
     border-color: #cbd5e1;
