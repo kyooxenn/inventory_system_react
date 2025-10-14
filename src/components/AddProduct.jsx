@@ -1,56 +1,52 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { createProduct } from "/src/services/api.js";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
-const productTypes = ["Electronics", "Furniture", "Clothing", "Food", "Books"];
-const unitTypes = ["Piece", "Box", "Kg", "Pack", "Bottle"];
+const PRODUCT_TYPES = ["Electronics", "Furniture", "Clothing", "Food", "Books"];
+const UNIT_TYPES = ["Piece", "Box", "Kg", "Pack", "Bottle"];
 
 // ✅ Generate 13-character alphanumeric ID
-function generateId() {
-  return crypto.randomUUID().replace(/-/g, "").substring(0, 13).toUpperCase();
-}
+const generateId = () =>
+  crypto.randomUUID().replace(/-/g, "").substring(0, 13).toUpperCase();
 
 export default function AddProduct() {
-  const [product, setProduct] = useState({
-    id: "",
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [product, setProduct] = useState(() => ({
+    id: generateId(),
     itemName: "",
     description: "",
     category: "",
     unitPrice: "",
     quantity: "",
     unit: "",
-  });
+  }));
 
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    setProduct((prev) => ({ ...prev, id: generateId() }));
-  }, []);
-
-  const handleChange = (e) => {
+  // ✅ Handle input changes efficiently
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     if (name === "unitPrice" && !/^\d*\.?\d*$/.test(value)) return;
     setProduct((prev) => ({ ...prev, [name]: value }));
-  };
+  }, []);
 
-  const validateFields = () => {
-    if (!product.itemName.trim()) return "Item name is required.";
-    if (!productTypes.includes(product.category))
-      return "Please select a valid product type.";
-    if (!product.description.trim()) return "Description is required.";
-    if (!unitTypes.includes(product.unit))
-      return "Please select a valid unit type.";
-    if (isNaN(product.quantity) || product.quantity <= 0)
-      return "Quantity must be a positive number.";
-    if (isNaN(product.unitPrice) || product.unitPrice <= 0)
+  // ✅ Client-side validation
+  const validateFields = useCallback(() => {
+    const { itemName, description, category, unit, quantity, unitPrice } = product;
+
+    if (!itemName.trim()) return "Item name is required.";
+    if (!PRODUCT_TYPES.includes(category)) return "Please select a valid category.";
+    if (!description.trim()) return "Description is required.";
+    if (!UNIT_TYPES.includes(unit)) return "Please select a valid unit type.";
+    if (isNaN(quantity) || quantity <= 0) return "Quantity must be a positive number.";
+    if (isNaN(unitPrice) || unitPrice <= 0)
       return "Unit price must be a positive number.";
     return "";
-  };
+  }, [product]);
 
+  // ✅ Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     const error = validateFields();
@@ -59,22 +55,28 @@ export default function AddProduct() {
     setLoading(true);
     try {
       await createProduct(product);
-      toast.success(`Product added successfully!`);
+      toast.success("Product added successfully!");
       navigate("/inventory");
     } catch (err) {
-      console.error("Error adding product:", err.response?.data);
+      console.error("Error adding product:", err);
       const backendMessage =
-        err.response?.data?.errorMessage ||
-        "Failed to add product. Please try again.";
+        err.response?.data?.errorMessage || "Failed to add product. Please try again.";
       toast.error(backendMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  // ✅ Memoized shared input classes
+  const inputClass = useMemo(
+    () =>
+      "w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-4 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500",
+    []
+  );
+
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-center items-center py-10 px-4">
-      {/* Header + Back Navigation */}
+      {/* Header */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
         <h1 className="text-4xl font-extrabold text-blue-400 drop-shadow-lg">
           ✨ Add New Product
@@ -87,128 +89,89 @@ export default function AddProduct() {
         </Link>
       </div>
 
-      {/* Form Container */}
+      {/* Form */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
         className="w-full max-w-5xl bg-gray-900/80 backdrop-blur-lg rounded-2xl shadow-lg p-10 border border-gray-800"
       >
         {/* Product ID */}
         <div className="text-center mb-6">
           <p className="text-sm text-gray-400">Generated Product ID</p>
           <p className="text-lg font-semibold text-blue-400 tracking-widest">
-            {product.id || "Generating..."}
+            {product.id}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Column */}
           <div className="space-y-5">
-            {/* Item Name */}
-            <div>
-              <label className="block mb-1 font-medium">Item Name</label>
-              <input
-                name="itemName"
-                type="text"
-                value={product.itemName}
-                onChange={handleChange}
-                className="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-4 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter item name"
-                required
-              />
-            </div>
+            <InputField
+              label="Item Name"
+              name="itemName"
+              value={product.itemName}
+              onChange={handleChange}
+              placeholder="Enter item name"
+              className={inputClass}
+            />
 
-            {/* Category */}
-            <div>
-              <label className="block mb-1 font-medium">Category</label>
-              <select
-                name="category"
-                value={product.category}
-                onChange={handleChange}
-                className="w-full bg-gray-800 text-white border border-gray-700 px-4 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select Category</option>
-                {productTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              label="Category"
+              name="category"
+              value={product.category}
+              onChange={handleChange}
+              options={PRODUCT_TYPES}
+              className={inputClass}
+            />
 
-            {/* Unit */}
-            <div>
-              <label className="block mb-1 font-medium">Unit</label>
-              <select
-                name="unit"
-                value={product.unit}
-                onChange={handleChange}
-                className="w-full bg-gray-800 text-white border border-gray-700 px-4 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select Unit</option>
-                {unitTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              label="Unit"
+              name="unit"
+              value={product.unit}
+              onChange={handleChange}
+              options={UNIT_TYPES}
+              className={inputClass}
+            />
           </div>
 
           {/* Right Column */}
           <div className="space-y-5">
-            {/* Description */}
-            <div>
-              <label className="block mb-1 font-medium">Description</label>
-              <input
-                name="description"
-                type="text"
-                value={product.description}
-                onChange={handleChange}
-                className="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-4 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter description"
-                required
-              />
-            </div>
+            <InputField
+              label="Description"
+              name="description"
+              value={product.description}
+              onChange={handleChange}
+              placeholder="Enter description"
+              className={inputClass}
+            />
 
-            {/* Quantity */}
-            <div>
-              <label className="block mb-1 font-medium">Quantity</label>
-              <input
-                name="quantity"
-                type="number"
-                value={product.quantity}
-                onChange={handleChange}
-                className="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-4 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter quantity"
-                required
-              />
-            </div>
+            <InputField
+              label="Quantity"
+              name="quantity"
+              type="number"
+              value={product.quantity}
+              onChange={handleChange}
+              placeholder="Enter quantity"
+              className={inputClass}
+            />
 
-            {/* Unit Price */}
-            <div>
-              <label className="block mb-1 font-medium">Unit Price</label>
-              <input
-                name="unitPrice"
-                type="text"
-                value={product.unitPrice}
-                onChange={handleChange}
-                className="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-4 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter unit price"
-                required
-              />
-            </div>
+            <InputField
+              label="Unit Price"
+              name="unitPrice"
+              value={product.unitPrice}
+              onChange={handleChange}
+              placeholder="Enter unit price"
+              className={inputClass}
+            />
           </div>
 
           {/* Buttons */}
-          <div className="col-span-1 md:col-span-2 flex justify-between items-center pt-4">
+          <div className="col-span-full flex justify-between items-center pt-4">
             <motion.button
               type="submit"
               disabled={loading}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.97 }}
               className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 disabled:opacity-50 font-semibold shadow-md transition"
             >
               {loading ? (
@@ -236,14 +199,40 @@ export default function AddProduct() {
       <motion.footer
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.5 }}
         className="mt-10 text-gray-500 text-sm text-center"
       >
         © 2025 Norbs | Built with{" "}
         <span className="text-blue-400">React</span> +{" "}
         <span className="text-teal-400">Tailwind</span> +{" "}
-        <span className="text-pink-400">Motion</span>
+        <span className="text-pink-400">Framer Motion</span>
       </motion.footer>
+    </div>
+  );
+}
+
+/* ✅ Reusable Subcomponents */
+function InputField({ label, className, ...props }) {
+  return (
+    <div>
+      <label className="block mb-1 font-medium">{label}</label>
+      <input {...props} className={className} required />
+    </div>
+  );
+}
+
+function SelectField({ label, options, className, ...props }) {
+  return (
+    <div>
+      <label className="block mb-1 font-medium">{label}</label>
+      <select {...props} className={className} required>
+        <option value="">Select {label}</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
