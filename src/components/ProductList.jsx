@@ -333,7 +333,7 @@ export default function ProductList() {
           </motion.div>
         </div>
 
-        {/* Mobile Cards */}
+        {/* ✅ Mobile Cards with Select */}
         <div className="md:hidden grid gap-4 mb-6">
           {filteredProducts.length > 0 ? (
             filteredProducts.map((product) => (
@@ -343,40 +343,51 @@ export default function ProductList() {
                 transition={{ duration: 0.12 }}
                 className="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-md"
               >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-lg font-bold text-blue-400 mb-1">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(product.id)}
+                      onChange={() => handleCheckboxChange(product.id)}
+                      className="accent-blue-500 w-5 h-5"
+                    />
+                    <h2 className="text-lg font-bold text-blue-400">
                       {product.itemName}
                     </h2>
-                   <p className="text-gray-400 text-sm mb-2 max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap select-text" title={product.description}>
-                     {product.description}
-                   </p>
-                    <div className="text-gray-400 text-sm space-y-1">
-                      <div>
-                        📁{" "}
-                        <span className="font-medium text-gray-200">
-                          {product.category}
-                        </span>
-                      </div>
-                      <div>
-                        📦{" "}
-                        <span className="font-medium text-gray-200">
-                          Qty: {product.quantity}
-                        </span>
-                      </div>
-                      <div>
-                        💰{" "}
-                        <span className="font-medium text-gray-200">
-                          ₱{product.unitPrice}
-                        </span>
-                      </div>
-                      <div>
-                        📐{" "}
-                        <span className="font-medium text-gray-200">
-                          {product.unit}
-                        </span>
-                      </div>
-                    </div>
+                  </div>
+                </div>
+
+                <p
+                  className="text-gray-400 text-sm mb-2 max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap select-text"
+                  title={product.description}
+                >
+                  {product.description}
+                </p>
+
+                <div className="text-gray-400 text-sm space-y-1">
+                  <div>
+                    📁{" "}
+                    <span className="font-medium text-gray-200">
+                      {product.category}
+                    </span>
+                  </div>
+                  <div>
+                    📦{" "}
+                    <span className="font-medium text-gray-200">
+                      Qty: {product.quantity}
+                    </span>
+                  </div>
+                  <div>
+                    💰{" "}
+                    <span className="font-medium text-gray-200">
+                      ₱{product.unitPrice}
+                    </span>
+                  </div>
+                  <div>
+                    📐{" "}
+                    <span className="font-medium text-gray-200">
+                      {product.unit}
+                    </span>
                   </div>
                 </div>
 
