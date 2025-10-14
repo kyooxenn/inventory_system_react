@@ -321,14 +321,14 @@ export default function ProductList() {
               {/* ✅ Button Section */}
                       <div className="mt-4 flex justify-end gap-2">
                         <Link to={`/update-product/${p.id}`}>
-                          <button className="w-[110px] bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded font-semibold text-sm flex items-center justify-center gap-1">
+                          <button className="min-w-[90px] bg-yellow-500 hover:bg-yellow-600 text-white py-1.5 rounded font-semibold text-xs whitespace-nowrap">
                             ✏️ Edit
                           </button>
                         </Link>
                         <button
                           onClick={() => handleDelete(p.id)}
                           disabled={deleting === p.id}
-                          className="w-[110px] bg-red-600 hover:bg-red-700 text-white py-2 rounded font-semibold text-sm flex items-center justify-center gap-1 disabled:opacity-50"
+                          className="min-w-[90px] bg-red-600 hover:bg-red-700 text-white py-1.5 rounded font-semibold text-xs whitespace-nowrap disabled:opacity-50"
                         >
                           {deleting === p.id ? (
                             <Loader2 className="animate-spin h-4 w-4 mx-auto" />
