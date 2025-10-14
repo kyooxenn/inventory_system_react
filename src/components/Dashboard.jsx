@@ -11,9 +11,16 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [dateTime, setDateTime] = useState(new Date());
   const navigate = useNavigate();
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
     loadProducts();
+
+    // ✅ Load username from localStorage
+    const storedUser = localStorage.getItem("username");
+    if (storedUser) {
+      setUsername(storedUser);
+    }
   }, []);
 
   useEffect(() => {
@@ -34,6 +41,7 @@ export default function Dashboard() {
 
   const handleLogout = () => {
     logout();
+    localStorage.removeItem("username");
     toast.success("You have been logged out.");
     navigate("/login");
   };
@@ -47,27 +55,39 @@ export default function Dashboard() {
 
   return (
     <>
-    <div className="relative w-full">
-      <div className="absolute top-2 right-2 z-10">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleLogout}
-          className="flex items-center gap-0.5 sm:gap-1 bg-gray-800 hover:bg-gray-700
-                     text-white px-2 sm:px-2.5 py-1 sm:py-1.5 rounded sm:rounded-md shadow-md
-                     transition-all duration-200 cursor-pointer text-[0.65rem] sm:text-[0.75rem]"
-        >
-          <LogOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-          <span className="font-medium">Log Out</span>
-        </motion.button>
+      {/* ✅ Top Bar */}
+      <div className="relative w-full bg-gray-900 py-2 shadow-md">
+        {/* Welcome message - upper left */}
+        {username && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            className="absolute top-2 left-4 z-10 text-white text-sm sm:text-base font-medium"
+          >
+            👋 Welcome, <span className="text-blue-400 font-semibold">{username}</span>
+          </motion.div>
+        )}
+
+        {/* Logout text with icon - upper right */}
+        <div className="absolute top-2 right-3 z-10">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleLogout}
+            className="flex items-center gap-1 text-white hover:text-blue-400 cursor-pointer
+                       text-sm sm:text-base font-medium transition-colors duration-200"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Log out</span>
+          </motion.div>
+        </div>
       </div>
-    </div>
 
-      {/* ✅ Main dashboard container (no relative positioning here) */}
+      {/* ✅ Main dashboard container */}
       <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between pb-24">
-
         {/* Header */}
-        <div className="px-4 pt-14 text-center">
+        <div className="px-4 pt-12 text-center">
           <h1 className="text-4xl font-extrabold mb-2 drop-shadow-lg text-blue-400">
             🧭 Dashboard Overview
           </h1>

@@ -22,6 +22,7 @@ export default function Login() {
         setIsRegister(false);
       } else {
         await login(username, password);
+        localStorage.setItem("username", username);
         toast.success("Login successful!");
         navigate("/");
       }
