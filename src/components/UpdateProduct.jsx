@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { getProductById, updateProduct, deleteProduct } from "/src/services/api.js";
+import { getProductById, updateProduct } from "/src/services/api.js";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -72,22 +72,6 @@ export default function UpdateProduct() {
       toast.error(msg);
     } finally {
       setLoading((prev) => ({ ...prev, update: false }));
-    }
-  };
-
-  // ✅ Delete product
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
-
-    setLoading((prev) => ({ ...prev, del: true }));
-    try {
-      await deleteProduct(id);
-      toast.success("🗑 Product deleted successfully!");
-      navigate("/inventory");
-    } catch {
-      toast.error("Failed to delete product.");
-    } finally {
-      setLoading((prev) => ({ ...prev, del: false }));
     }
   };
 
@@ -169,22 +153,6 @@ export default function UpdateProduct() {
                 </div>
               ) : (
                 "💾 Update Product"
-              )}
-            </motion.button>
-
-            <motion.button
-              type="button"
-              onClick={handleDelete}
-              disabled={loading.del || loading.update}
-              whileTap={{ scale: 0.97 }}
-              className="bg-red-600 text-white px-6 py-3 rounded-md hover:bg-red-700 disabled:opacity-50 font-semibold shadow-md transition"
-            >
-              {loading.del ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="animate-spin h-5 w-5" /> <span>Deleting...</span>
-                </div>
-              ) : (
-                "🗑 Delete Product"
               )}
             </motion.button>
 
