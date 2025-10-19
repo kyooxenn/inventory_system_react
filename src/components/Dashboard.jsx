@@ -61,32 +61,31 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* ✅ Top Bar */}
-      <div className="w-full bg-gray-900 py-6 px-4 shadow-md flex items-center justify-between">
-        {/* Welcome Message */}
-        {username && (
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-white text-sm sm:text-base font-medium"
-          >
-            👋 Welcome, <span className="text-blue-400 font-semibold">{username}</span>
-          </motion.div>
-        )}
+     <div className="w-full bg-gray-900 py-3 px-4 shadow-md flex items-center justify-between">
+       {/* Welcome Message */}
+       {username && (
+         <motion.div
+           initial={{ opacity: 0, x: -10 }}
+           animate={{ opacity: 1, x: 0 }}
+           transition={{ duration: 0.6 }}
+           className="text-white text-sm sm:text-base font-medium mt-[2px] sm:mt-1"
+         >
+           👋 Welcome, <span className="text-blue-400 font-semibold">{username}</span>
+         </motion.div>
+       )}
 
-        {/* Logout */}
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleLogout}
-          className="flex items-center gap-1 text-white hover:text-blue-400 cursor-pointer
-                     text-sm sm:text-base font-medium transition-colors duration-200"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>Log out</span>
-        </motion.div>
-      </div>
+       {/* Logout */}
+       <motion.div
+         whileHover={{ scale: 1.05 }}
+         whileTap={{ scale: 0.95 }}
+         onClick={handleLogout}
+         className="flex items-center gap-1 text-white hover:text-blue-400 cursor-pointer
+                    text-sm sm:text-base font-medium transition-colors duration-200 mt-[2px] sm:mt-1"
+       >
+         <LogOut className="w-4 h-4" />
+         <span>Log out</span>
+       </motion.div>
+     </div>
 
       {/* ✅ Dashboard Main */}
       <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between pb-24">
