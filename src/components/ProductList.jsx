@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { getAllProducts, deleteProduct, getProduct } from "/src/services/api.js";
 import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
@@ -41,6 +42,10 @@ export default function ProductList() {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(null);
 
+  /* Pagination States */
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 5;
+
   const hasSelection = selectedIds.length > 0;
 
   /* ---------------- Load All Products ---------------- */
@@ -50,6 +55,7 @@ export default function ProductList() {
       const data = await getAllProducts();
       setProducts(data || []);
       setFiltered(data || []);
+      setCurrentPage(1);
     } catch {
       toast.error("Failed to load products.");
     } finally {
@@ -65,10 +71,14 @@ export default function ProductList() {
   const handleSearch = useCallback(async () => {
     setLoading(true);
     try {
-      if (!searchQuery.trim()) return setFiltered(products);
-
+      if (!searchQuery.trim()) {
+        setFiltered(products);
+        setCurrentPage(1);
+        return;
+      }
       const results = await getProduct(searchQuery.trim());
       setFiltered(results?.length ? results : []);
+      setCurrentPage(1);
       if (!results?.length) toast("No matching products found.");
     } catch {
       toast.error("Search failed.");
@@ -110,11 +120,44 @@ export default function ProductList() {
     }
   };
 
+  /* ---------------- Pagination Logic ---------------- */
+  const totalPages = Math.ceil(filtered.length / productsPerPage) || 1;
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = filtered.slice(indexOfFirstProduct, indexOfLastProduct);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    setSelectedIds([]); // ✅ Clear selected items on page change
+  };
+
   /* ---------------- Checkbox Logic ---------------- */
+  const headerCheckboxRef = useRef(null);
+  const currentPageIds = currentProducts.map((p) => p.id);
+  const allSelectedOnPage =
+    currentPageIds.length > 0 &&
+    currentPageIds.every((id) => selectedIds.includes(id));
+  const someSelectedOnPage =
+    currentPageIds.some((id) => selectedIds.includes(id)) && !allSelectedOnPage;
+
+  useEffect(() => {
+    if (headerCheckboxRef.current) {
+      headerCheckboxRef.current.indeterminate = someSelectedOnPage;
+    }
+  }, [someSelectedOnPage]);
+
   const toggleSelectAll = () => {
-    setSelectedIds((prev) =>
-      prev.length === filtered.length ? [] : filtered.map((p) => p.id)
-    );
+    if (allSelectedOnPage) {
+      // remove current page ids from selectedIds
+      setSelectedIds((prev) => prev.filter((id) => !currentPageIds.includes(id)));
+    } else {
+      // add current page ids to selectedIds without duplicates
+      setSelectedIds((prev) => {
+        const s = new Set(prev);
+        currentPageIds.forEach((id) => s.add(id));
+        return Array.from(s);
+      });
+    }
   };
 
   const toggleSelect = (id) =>
@@ -124,8 +167,7 @@ export default function ProductList() {
 
   /* ---------------- Derived Values ---------------- */
   const emptyMessage = useMemo(
-    () =>
-      searchQuery ? "No matching products found." : "No products available.",
+    () => (searchQuery ? "No matching products found." : "No products available."),
     [searchQuery]
   );
 
@@ -212,7 +254,7 @@ export default function ProductList() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-2xl shadow-lg overflow-x-auto"
-          style={{ maxHeight: "400px" }}
+          style={{ maxHeight: "420px" }}
         >
           <table className="min-w-full text-sm">
             <thead className="bg-gray-800 text-gray-300 uppercase tracking-wide">
@@ -220,19 +262,24 @@ export default function ProductList() {
                 <th className="px-3 py-3 text-left">
                   <input
                     type="checkbox"
-                    checked={selectedIds.length === filtered.length && filtered.length > 0}
+                    ref={headerCheckboxRef}
+                    checked={allSelectedOnPage}
                     onChange={toggleSelectAll}
                     className="accent-blue-500 w-4 h-4"
                   />
                 </th>
-                {["Item Name", "Description", "Category", "Quantity", "Price", "Unit", "Actions"].map((header) => (
-                  <th key={header} className="px-4 py-3 text-left">{header}</th>
-                ))}
+                {["Item Name", "Description", "Category", "Quantity", "Price", "Unit", "Actions"].map(
+                  (header) => (
+                    <th key={header} className="px-4 py-3 text-left">
+                      {header}
+                    </th>
+                  )
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
-              {filtered.length ? (
-                filtered.map((p) => (
+              {currentProducts.length ? (
+                currentProducts.map((p) => (
                   <motion.tr
                     key={p.id}
                     whileHover={{ scale: 1.01 }}
@@ -285,12 +332,35 @@ export default function ProductList() {
             </tbody>
           </table>
         </motion.div>
+
+        {/* ✅ Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center mt-4 gap-3">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 bg-gray-800 text-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-700"
+            >
+              ⬅ Prev
+            </button>
+            <span className="text-gray-400 text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 bg-gray-800 text-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-700"
+            >
+              Next ➡
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Mobile Cards */}
+      {/* ✅ Mobile Cards */}
       <div className="md:hidden w-full max-w-5xl grid gap-4 mt-4">
-        {filtered.length ? (
-          filtered.map((p) => (
+        {currentProducts.length ? (
+          currentProducts.map((p) => (
             <motion.div
               key={p.id}
               whileHover={{ scale: 1.01 }}
@@ -305,44 +375,65 @@ export default function ProductList() {
                     onChange={() => toggleSelect(p.id)}
                     className="accent-blue-500 w-5 h-5"
                   />
-                  <h2 className="text-lg font-bold text-blue-400 leading-tight whitespace-nowrap text-ellipsis w-full">{p.itemName}</h2>
+                  <h2 className="text-lg font-bold text-blue-400 leading-tight whitespace-nowrap text-ellipsis w-full">
+                    {p.itemName}
+                  </h2>
                 </div>
               </div>
               <p className="px-4 py-3 text-gray-400 max-w-[360px] truncate" title={p.description}>
                 {p.description}
               </p>
-               {/* ✅ Info Section */}
-                      <div className="text-gray-400 text-sm mt-2 space-y-1">
-                        <div>📁 {p.category || "Uncategorized"}</div>
-                        <div>📦 Qty: {p.quantity ?? 0}</div>
-                        <div>💰 ₱{p.unitPrice ?? 0}</div>
-                        <div>📐 {p.unit || "-"}</div>
-                      </div>
-              {/* ✅ Button Section */}
-                      <div className="mt-4 flex justify-end gap-2">
-                        <Link to={`/update-product/${p.id}`}>
-                          <button className="min-w-[90px] bg-yellow-500 hover:bg-yellow-600 text-white py-1.5 rounded font-semibold text-xs whitespace-nowrap">
-                            ✏️ Edit
-                          </button>
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(p.id)}
-                          disabled={deleting === p.id}
-                          className="min-w-[90px] bg-red-600 hover:bg-red-700 text-white py-1.5 rounded font-semibold text-xs whitespace-nowrap disabled:opacity-50"
-                        >
-                          {deleting === p.id ? (
-                            <Loader2 className="animate-spin h-4 w-4 mx-auto" />
-                          ) : (
-                            <>
-                              🗑 Delete
-                            </>
-                          )}
-                        </button>
-                      </div>
+              <div className="text-gray-400 text-sm mt-2 space-y-1">
+                <div>📁 {p.category || "Uncategorized"}</div>
+                <div>📦 Qty: {p.quantity ?? 0}</div>
+                <div>💰 ₱{p.unitPrice ?? 0}</div>
+                <div>📐 {p.unit || "-"}</div>
+              </div>
+              <div className="mt-4 flex justify-end gap-2">
+                <Link to={`/update-product/${p.id}`}>
+                  <button className="min-w-[90px] bg-yellow-500 hover:bg-yellow-600 text-white py-1.5 rounded font-semibold text-xs whitespace-nowrap">
+                    ✏️ Edit
+                  </button>
+                </Link>
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  disabled={deleting === p.id}
+                  className="min-w-[90px] bg-red-600 hover:bg-red-700 text-white py-1.5 rounded font-semibold text-xs whitespace-nowrap disabled:opacity-50"
+                >
+                  {deleting === p.id ? (
+                    <Loader2 className="animate-spin h-4 w-4 mx-auto" />
+                  ) : (
+                    "🗑 Delete"
+                  )}
+                </button>
+              </div>
             </motion.div>
           ))
         ) : (
           <EmptyState message={emptyMessage} />
+        )}
+
+        {/* ✅ Mobile Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center mt-6 gap-3">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 bg-gray-800 text-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-700"
+            >
+              ⬅ Prev
+            </button>
+            <span className="text-gray-400 text-sm">
+              Page {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 bg-gray-800 text-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-700"
+            >
+              Next ➡
+            </button>
+          </div>
         )}
       </div>
 
@@ -353,8 +444,8 @@ export default function ProductList() {
         transition={{ duration: 0.6 }}
         className="mt-10 text-gray-500 text-sm text-center"
       >
-         © {new Date().getFullYear()} Norbert Jon Bobila | {" "}
-                            <span className="text-blue-400">All rights reserved.</span>
+        © {new Date().getFullYear()} Norbert Jon Bobila |{" "}
+        <span className="text-blue-400">All rights reserved.</span>
       </motion.footer>
     </div>
   );
