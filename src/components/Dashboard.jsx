@@ -69,14 +69,14 @@ export default function Dashboard() {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="absolute top-2 left-4 z-10 text-white text-sm sm:text-base font-medium"
+            className="absolute top-5 left-4 z-10 text-white text-sm sm:text-base font-medium"
           >
             👋 Welcome, <span className="text-blue-400 font-semibold">{username}</span>
           </motion.div>
         )}
 
         {/* Logout */}
-        <div className="absolute top-2 right-3 z-10">
+        <div className="absolute top-5 right-3 z-10">
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
