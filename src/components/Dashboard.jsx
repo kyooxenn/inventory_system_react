@@ -170,10 +170,8 @@ export default function Dashboard() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="fixed bottom-0 left-0 w-full bg-gray-900 text-gray-400 text-sm py-3 text-center shadow-inner"
         >
-          © 2025 Norbs | Built with{" "}
-          <span className="text-blue-400">React</span> +{" "}
-          <span className="text-teal-400">Tailwind</span> +{" "}
-          <span className="text-pink-400">Motion</span>
+          © {new Date().getFullYear()} Norbert Jon Bobila | {" "}
+          <span className="text-blue-400">All rights reserved.</span>
         </motion.footer>
       </div>
     </>
