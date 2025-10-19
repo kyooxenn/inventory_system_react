@@ -61,14 +61,19 @@ export default function Dashboard() {
 
   return (
     <>
-     <div className="w-full bg-gray-900 py-3 px-4 shadow-md flex items-center justify-between">
+     <motion.div
+       initial={{ opacity: 0, y: -10 }}
+       animate={{ opacity: 1, y: 0 }}
+       transition={{ duration: 0.5, ease: "easeOut" }}
+       className="w-full bg-gray-900 py-3 px-4 shadow-md flex items-center justify-between border-b border-gray-800"
+     >
        {/* Welcome Message */}
        {username && (
          <motion.div
            initial={{ opacity: 0, x: -10 }}
            animate={{ opacity: 1, x: 0 }}
            transition={{ duration: 0.6 }}
-           className="text-white text-sm sm:text-base font-medium mt-[2px] sm:mt-1"
+           className="text-white text-sm sm:text-base font-medium mt-[20px] sm:mt-1"
          >
            👋 Welcome, <span className="text-blue-400 font-semibold">{username}</span>
          </motion.div>
@@ -80,12 +85,12 @@ export default function Dashboard() {
          whileTap={{ scale: 0.95 }}
          onClick={handleLogout}
          className="flex items-center gap-1 text-white hover:text-blue-400 cursor-pointer
-                    text-sm sm:text-base font-medium transition-colors duration-200 mt-[2px] sm:mt-1"
+                    text-sm sm:text-base font-medium transition-colors duration-200 mt-[20px] sm:mt-1"
        >
          <LogOut className="w-4 h-4" />
          <span>Log out</span>
        </motion.div>
-     </div>
+     </motion.div>
 
       {/* ✅ Dashboard Main */}
       <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between pb-24">
