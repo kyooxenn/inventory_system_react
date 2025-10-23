@@ -5,10 +5,55 @@ import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
-const PRODUCT_TYPES = ["Electronics", "Furniture", "Clothing", "Food", "Books"];
+const PRODUCT_TYPES = [
+    "Books",
+    "Movies",
+    "Music",
+    "Games",
+    "Electronics",
+    "Computers",
+    "Home",
+    "Garden",
+    "Tools",
+    "Grocery",
+    "Health",
+    "Beauty",
+    "Toys",
+    "Kids",
+    "Baby",
+    "Clothing",
+    "Shoes",
+    "Jewelery",
+    "Sports",
+    "Outdoors",
+    "Automotive",
+    "Industrial"
+    ];
 const UNIT_TYPES = ["Piece", "Box", "Kg", "Pack", "Bottle"];
-const CATEGORY_MAP = { 1: "Electronics", 2: "Furniture", 3: "Clothing", 4: "Food", 5: "Books" };
-
+const CATEGORY_MAP = {
+    1:  "Books",
+    2:  "Movies",
+    3:  "Music",
+    4:  "Games",
+    5:  "Electronics",
+    6:  "Computers",
+    7:  "Home",
+    8:  "Garden",
+    9:  "Tools",
+    10: "Grocery",
+    11: "Health",
+    12: "Beauty",
+    13: "Toys",
+    14: "Kids",
+    15: "Baby",
+    16: "Clothing",
+    17: "Shoes",
+    18: "Jewelery",
+    19: "Sports",
+    20: "Outdoors",
+    21: "Automotive",
+    22: "Industrial"
+};
 export default function UpdateProduct() {
   const { id } = useParams();
   const navigate = useNavigate();

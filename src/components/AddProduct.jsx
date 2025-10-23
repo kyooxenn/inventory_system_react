@@ -5,7 +5,30 @@ import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
-const PRODUCT_TYPES = ["Electronics", "Furniture", "Clothing", "Food", "Books"];
+const PRODUCT_TYPES = [
+    "Books",
+    "Movies",
+    "Music",
+    "Games",
+    "Electronics",
+    "Computers",
+    "Home",
+    "Garden",
+    "Tools",
+    "Grocery",
+    "Health",
+    "Beauty",
+    "Toys",
+    "Kids",
+    "Baby",
+    "Clothing",
+    "Shoes",
+    "Jewelery",
+    "Sports",
+    "Outdoors",
+    "Automotive",
+    "Industrial"
+    ];
 const UNIT_TYPES = ["Piece", "Box", "Kg", "Pack", "Bottle"];
 
 // ✅ Generate 13-character alphanumeric ID
