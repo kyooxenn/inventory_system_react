@@ -2,9 +2,9 @@ import axios from "axios";
 import { getToken } from "./auth.js";
 
 // ✅ Use your deployed backend
-//const API_BASE_URL = "https://inventory-system-springboot-sea.onrender.com/v1/product";
+const API_BASE_URL = "https://inventory-system-springboot-sea.onrender.com/v1/product";
 
-const API_BASE_URL = "http://localhost:8080/v1/product";
+//const API_BASE_URL = "http://localhost:8080/v1/product";
 
 // Helper to include Authorization header
 const authHeader = () => ({
