@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { login, register } from "/src/services/auth.js";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
@@ -11,34 +11,40 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ Reusable input handler
+  // ✅ Reset form when switching between login/register
+  useEffect(() => {
+    setForm({ username: "", password: "" });
+  }, [isRegister]);
+
+  // ✅ Handle input changes
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  // ✅ Submit (handles both login/register)
+  // ✅ Handle submit (shared for login & register)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       if (isRegister) {
-        await register(form.username, form.password);
+        await register(form.username.trim(), form.password.trim());
         toast.success("Registration successful! You can now log in.");
         setIsRegister(false);
+        navigate("/login");
       } else {
-        await login(form.username, form.password);
+        await login(form.username.trim(), form.password.trim());
         localStorage.setItem("username", form.username);
         toast.success("Login successful!");
         navigate("/");
       }
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err?.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Framer Motion Variants (memoized to avoid re-renders)
+  // ✅ Animation variants (memoized)
   const formVariants = useMemo(
     () => ({
       initial: { opacity: 0, y: 20, scale: 0.98 },
@@ -48,7 +54,7 @@ export default function Login() {
     []
   );
 
-  // ✅ Inline Loader (light animation)
+  // ✅ Inline loader
   const InlineLoader = () => (
     <motion.div
       initial={{ opacity: 0 }}
@@ -64,7 +70,7 @@ export default function Login() {
     </motion.div>
   );
 
-  // ✅ Common input & button classes
+  // ✅ Styles
   const inputClass =
     "w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-400 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500";
   const buttonClass =
@@ -82,7 +88,7 @@ export default function Login() {
 
         <AnimatePresence mode="wait">
           <motion.div
-            key={isRegister ? "register" : "login"}
+            key={isRegister ? "register-form" : "login-form"} // ✅ key ensures remount
             variants={formVariants}
             initial="initial"
             animate="animate"
@@ -90,7 +96,7 @@ export default function Login() {
             transition={{ duration: 0.4 }}
             className={loading ? "pointer-events-none opacity-50" : ""}
           >
-            {/* ✅ Icon + Header */}
+            {/* Header */}
             <div className="text-center mb-8">
               <motion.div
                 whileHover={{ scale: 1.1, rotate: 3 }}
@@ -109,9 +115,10 @@ export default function Login() {
               </p>
             </div>
 
-            {/* ✅ Form */}
+            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
+                key={`username-${isRegister}`} // ✅ ensures fresh field
                 type="text"
                 name="username"
                 placeholder="Username"
@@ -121,6 +128,7 @@ export default function Login() {
                 required
               />
               <input
+                key={`password-${isRegister}`} // ✅ ensures fresh field
                 type="password"
                 name="password"
                 placeholder="Password"
@@ -139,7 +147,7 @@ export default function Login() {
               </motion.button>
             </form>
 
-            {/* ✅ Toggle Mode */}
+            {/* Toggle Mode */}
             <div className="text-center mt-6 text-gray-400">
               {isRegister
                 ? "Already have an account?"
@@ -148,7 +156,14 @@ export default function Login() {
                 whileTap={{ scale: 0.95 }}
                 type="button"
                 className="text-blue-400 hover:text-blue-300 font-medium"
-                onClick={() => setIsRegister((prev) => !prev)}
+                onClick={() => {
+                  if (isRegister) {
+                    setIsRegister(false);
+                    navigate("/login");
+                  } else {
+                    navigate("/register");
+                  }
+                }}
               >
                 {isRegister ? "Login" : "Register"}
               </motion.button>
@@ -156,15 +171,15 @@ export default function Login() {
           </motion.div>
         </AnimatePresence>
 
-        {/* ✅ Footer */}
+        {/* Footer */}
         <motion.footer
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           className="text-gray-500 text-xs text-center mt-6"
         >
-           © {new Date().getFullYear()} Norbert Jon Bobila | {" "}
-                    <span className="text-blue-400">All rights reserved.</span>
+          © {new Date().getFullYear()} Norbert Jon Bobila |{" "}
+          <span className="text-blue-400">All rights reserved.</span>
         </motion.footer>
       </motion.div>
     </div>
