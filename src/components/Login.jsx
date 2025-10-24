@@ -31,8 +31,8 @@ export default function Login() {
         toast.success("Login successful!");
         navigate("/");
       }
-    } catch {
-      toast.error(isRegister ? "Username already exists" : "Invalid credentials");
+    } catch (err) {
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }

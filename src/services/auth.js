@@ -5,15 +5,45 @@ import axios from "axios";
 //deploy online render
 const API_BASE_URL = "https://inventory-system-springboot-sea.onrender.com/api/auth";
 
+// ✅ LOGIN
 export const login = async (username, password) => {
-  const response = await axios.post(`${API_BASE_URL}/login`, { username, password });
-  localStorage.setItem("token", response.data.token);
-  return response.data;
+  try {
+    const response = await axios.post(`${API_BASE_URL}/login`, { username, password });
+
+    if (response.status === 200 && response.data.token) {
+      localStorage.setItem("token", response.data.token);
+      return response.data; // { token: "..." }
+    } else {
+      throw new Error(response.data.error || "Login failed");
+    }
+  } catch (error) {
+    const message =
+      error.response?.data?.error ||
+      (error.response?.status === 401
+        ? "Invalid username or password"
+        : "Login failed");
+    throw new Error(message);
+  }
 };
 
+// ✅ REGISTER
 export const register = async (username, password) => {
-  const response = await axios.post(`${API_BASE_URL}/register`, { username, password });
-  return response.data;
+  try {
+    const response = await axios.post(`${API_BASE_URL}/register`, { username, password });
+
+    if (response.status === 201 || response.status === 200) {
+      return response.data.message || "Registration successful!";
+    } else {
+      throw new Error(response.data.error || "Registration failed");
+    }
+  } catch (error) {
+    const message =
+      error.response?.data?.error ||
+      (error.response?.status === 409
+        ? "Username already exists"
+        : "Registration failed");
+    throw new Error(message);
+  }
 };
 
 export const logout = () => {
