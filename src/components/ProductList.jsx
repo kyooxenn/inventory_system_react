@@ -40,6 +40,7 @@ export default function ProductList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [pageTransitioning, setPageTransitioning] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [category, setCategory] = useState("");
   const [totalPages, setTotalPages] = useState(1);
@@ -51,10 +52,9 @@ export default function ProductList() {
     "Clothing", "Shoes", "Jewelery", "Sports", "Outdoors", "Automotive", "Industrial"
   ];
 
-  /* Pagination States */
+  /* Pagination */
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 5;
-
   const hasSelection = selectedIds.length > 0;
 
   /* ---------------- Load All Products ---------------- */
@@ -65,7 +65,8 @@ export default function ProductList() {
       setProducts(data?.content || []);
       setFiltered(data?.content || []);
       setTotalPages(data?.totalPages || 1);
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error("Failed to load products.");
     } finally {
       setLoading(false);
@@ -79,7 +80,7 @@ export default function ProductList() {
 
   /* ---------------- Search Products ---------------- */
   const handleSearch = useCallback(async () => {
-    setLoading(true);
+    setPageTransitioning(true);
     try {
       if (!searchQuery.trim() && !category.trim()) {
         setIsSearching(false);
@@ -90,15 +91,20 @@ export default function ProductList() {
 
       setIsSearching(true);
       setCurrentPage(1);
+
+      const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+      await delay(300);
+
       const results = await getProduct(searchQuery.trim(), category.trim(), 0, productsPerPage);
       setFiltered(results?.content || []);
       setTotalPages(results?.totalPages || 1);
-
       if (!results?.content?.length) toast("No matching products found.");
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error("Search failed.");
     } finally {
       setLoading(false);
+      setTimeout(() => setPageTransitioning(false), 200);
     }
   }, [searchQuery, category, loadProducts]);
 
@@ -110,17 +116,17 @@ export default function ProductList() {
       await deleteProduct(id);
       toast.success("Product deleted successfully!");
       setSelectedIds((prev) => prev.filter((pid) => pid !== id));
+
       if (isSearching) {
         const results = await getProduct(searchQuery.trim(), category.trim(), currentPage - 1, productsPerPage);
         setFiltered(results?.content || []);
         setTotalPages(results?.totalPages || 1);
-        if (!results?.content?.length && currentPage > 1) {
-          setCurrentPage(currentPage - 1);
-        }
+        if (!results?.content?.length && currentPage > 1) setCurrentPage(currentPage - 1);
       } else {
         await loadProducts(currentPage - 1);
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error("Failed to delete product.");
     } finally {
       setDeleting(null);
@@ -140,13 +146,12 @@ export default function ProductList() {
         const results = await getProduct(searchQuery.trim(), category.trim(), currentPage - 1, productsPerPage);
         setFiltered(results?.content || []);
         setTotalPages(results?.totalPages || 1);
-        if (!results?.content?.length && currentPage > 1) {
-          setCurrentPage(currentPage - 1);
-        }
+        if (!results?.content?.length && currentPage > 1) setCurrentPage(currentPage - 1);
       } else {
         await loadProducts(currentPage - 1);
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error("Failed to delete selected products.");
     } finally {
       setLoading(false);
@@ -157,32 +162,37 @@ export default function ProductList() {
   const currentProducts = filtered;
 
   const handlePageChange = async (newPage) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setPageTransitioning(true);
     setCurrentPage(newPage);
     setSelectedIds([]);
-    if (isSearching) {
-      setLoading(true);
-      try {
+
+    const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+    await delay(300);
+
+    try {
+      if (isSearching) {
+        setLoading(true);
         const results = await getProduct(searchQuery.trim(), category.trim(), newPage - 1, productsPerPage);
         setFiltered(results?.content || []);
         setTotalPages(results?.totalPages || 1);
-      } catch {
-        toast.error("Failed to load page.");
-      } finally {
-        setLoading(false);
+      } else {
+        await loadProducts(newPage - 1);
       }
-    } else {
-      await loadProducts(newPage - 1);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load page.");
+    } finally {
+      setLoading(false);
+      setTimeout(() => setPageTransitioning(false), 200);
     }
   };
 
   /* ---------------- Checkbox Logic ---------------- */
   const headerCheckboxRef = useRef(null);
   const currentPageIds = currentProducts.map((p) => p.id);
-  const allSelectedOnPage =
-    currentPageIds.length > 0 &&
-    currentPageIds.every((id) => selectedIds.includes(id));
-  const someSelectedOnPage =
-    currentPageIds.some((id) => selectedIds.includes(id)) && !allSelectedOnPage;
+  const allSelectedOnPage = currentPageIds.length > 0 && currentPageIds.every((id) => selectedIds.includes(id));
+  const someSelectedOnPage = currentPageIds.some((id) => selectedIds.includes(id)) && !allSelectedOnPage;
 
   useEffect(() => {
     if (headerCheckboxRef.current) {
@@ -202,10 +212,9 @@ export default function ProductList() {
     }
   };
 
-  const toggleSelect = (id) =>
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
 
   /* ---------------- Derived Values ---------------- */
   const emptyMessage = useMemo(
@@ -218,13 +227,8 @@ export default function ProductList() {
     <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center py-10 px-4">
       {/* Header */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-6">
-        <h1 className="text-4xl font-extrabold text-blue-400 drop-shadow-lg">
-          📦 Product Inventory
-        </h1>
-        <Link
-          to="/"
-          className="text-gray-300 hover:text-blue-400 transition font-medium"
-        >
+        <h1 className="text-4xl font-extrabold text-blue-400 drop-shadow-lg">📦 Product Inventory</h1>
+        <Link to="/" className="text-gray-300 hover:text-blue-400 transition font-medium">
           🧭 Back to Dashboard
         </Link>
       </div>
@@ -237,7 +241,6 @@ export default function ProductList() {
         className="w-full max-w-5xl bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-2xl shadow-lg p-4 mb-8"
       >
         <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-          {/* Search Bar */}
           <div className="flex w-full md:flex-1 gap-2">
             <input
               type="text"
@@ -266,15 +269,10 @@ export default function ProductList() {
               disabled={loading}
               className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md disabled:opacity-50 font-medium shadow-sm transition text-sm whitespace-nowrap"
             >
-              {loading ? (
-                <Loader2 className="animate-spin h-4 w-4 inline-block mr-1" />
-              ) : (
-                "Search"
-              )}
+              {loading ? <Loader2 className="animate-spin h-4 w-4 inline-block mr-1" /> : "Search"}
             </button>
           </div>
 
-          {/* Add + Bulk Delete */}
           <div className="flex gap-2 w-full md:w-auto">
             <Link to="/add-product" className="flex-1 md:flex-none">
               <motion.button
@@ -304,15 +302,29 @@ export default function ProductList() {
       </motion.div>
 
       {/* ✅ Desktop Table */}
-      <div className="hidden md:block w-full max-w-5xl">
+      <div className="hidden md:block w-full max-w-5xl relative">
+        {(loading || pageTransitioning) && (
+          <div className="absolute inset-0 bg-gray-900/80 flex items-center justify-center backdrop-blur-sm z-10 rounded-2xl">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Loader2 className="animate-spin h-8 w-8 text-blue-400" />
+            </motion.div>
+          </div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-2xl shadow-lg overflow-x-auto"
+          className={`bg-gray-900/80 backdrop-blur-lg border border-gray-800 rounded-2xl shadow-lg overflow-x-auto transition-opacity ${
+            loading || pageTransitioning ? "opacity-0" : "opacity-100"
+          }`}
           style={{ maxHeight: "420px" }}
         >
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-sm relative">
             <thead className="bg-gray-800 text-gray-300 uppercase tracking-wide">
               <tr>
                 <th className="px-3 py-3 text-left">
@@ -333,13 +345,16 @@ export default function ProductList() {
                 )}
               </tr>
             </thead>
+
             <tbody className="divide-y divide-gray-700">
               {currentProducts.length ? (
                 currentProducts.map((p) => (
                   <motion.tr
                     key={p.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
                     whileHover={{ scale: 1.01 }}
-                    transition={{ duration: 0.2 }}
                     className="hover:bg-gray-800 transition"
                   >
                     <td className="px-3 py-3 text-center">
@@ -389,7 +404,7 @@ export default function ProductList() {
           </table>
         </motion.div>
 
-        {/* ✅ Pagination Controls */}
+        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center mt-4 gap-3">
             <button
@@ -414,14 +429,28 @@ export default function ProductList() {
       </div>
 
       {/* ✅ Mobile Cards */}
-      <div className="md:hidden w-full max-w-5xl grid gap-4 mt-4">
+      <div className="md:hidden w-full max-w-5xl grid gap-4 mt-4 relative">
+        {(loading || pageTransitioning) && (
+          <div className="absolute inset-0 bg-gray-900/80 flex items-center justify-center backdrop-blur-sm z-10 rounded-xl">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Loader2 className="animate-spin h-8 w-8 text-blue-400" />
+            </motion.div>
+          </div>
+        )}
+
         {currentProducts.length ? (
           currentProducts.map((p) => (
             <motion.div
               key={p.id}
               whileHover={{ scale: 1.01 }}
               transition={{ duration: 0.15 }}
-              className="bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-md"
+              className={`bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-md transition-opacity ${
+                loading || pageTransitioning ? "opacity-0" : "opacity-100"
+              }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -456,11 +485,7 @@ export default function ProductList() {
                   disabled={deleting === p.id}
                   className="min-w-[90px] bg-red-600 hover:bg-red-700 text-white py-1.5 rounded font-semibold text-xs whitespace-nowrap disabled:opacity-50"
                 >
-                  {deleting === p.id ? (
-                    <Loader2 className="animate-spin h-4 w-4 mx-auto" />
-                  ) : (
-                    "🗑 Delete"
-                  )}
+                  {deleting === p.id ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : "🗑 Delete"}
                 </button>
               </div>
             </motion.div>
@@ -469,7 +494,7 @@ export default function ProductList() {
           <EmptyState message={emptyMessage} />
         )}
 
-        {/* ✅ Mobile Pagination */}
+        {/* Mobile Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center mt-6 gap-3">
             <button
