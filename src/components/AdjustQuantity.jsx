@@ -12,19 +12,44 @@ export default function AdjustQuantity() {
   const [selectedId, setSelectedId] = useState("");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(""); // New: for category filter
+
+  // ✅ Product types (same as in ProductList)
+  const PRODUCT_TYPES = [
+    "Books", "Movies", "Music", "Games", "Electronics", "Computers", "Home",
+    "Garden", "Tools", "Grocery", "Health", "Beauty", "Toys", "Kids", "Baby",
+    "Clothing", "Shoes", "Jewelery", "Sports", "Outdoors", "Automotive", "Industrial"
+  ];
+
+  // ✅ Filtered products based on selected category
+  const filteredProducts = useMemo(() => {
+    if (!selectedCategory) return products;
+    return products.filter((p) => p.category === selectedCategory);
+  }, [products, selectedCategory]);
 
   // ✅ Derived state (no need for separate selectedProduct)
   const selectedProduct = useMemo(
-    () => products.find((p) => p.id === selectedId) || null,
-    [selectedId, products]
+    () => filteredProducts.find((p) => p.id === selectedId) || null,
+    [selectedId, filteredProducts]
   );
 
-  // ✅ Load products once
+  // ✅ Load all products by fetching all pages
   useEffect(() => {
     (async () => {
       try {
-        const all = await getAllProducts();
-        setProducts(all);
+        let allProducts = [];
+        let page = 0;
+        let totalPages = 1;
+
+        // Fetch all pages to get all products
+        while (page < totalPages) {
+          const data = await getAllProducts(page, 1000);  // Large size to minimize requests
+          allProducts = [...allProducts, ...(data?.content || [])];
+          totalPages = data?.totalPages || 1;
+          page++;
+        }
+
+        setProducts(allProducts);
       } catch {
         toast.error("Failed to load products.");
       }
@@ -91,6 +116,28 @@ export default function AdjustQuantity() {
           {/* ✅ Selected Product Details */}
           <AnimateSelectedProduct product={selectedProduct} />
 
+          {/* ✅ Select Category */}
+          <div>
+            <label className="block text-gray-400 mb-2 text-sm font-medium">
+              Filter by Category (Optional)
+            </label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setSelectedId(""); // Reset selected product when category changes
+              }}
+              className={inputClass}
+            >
+              <option value="">All Categories</option>
+              {PRODUCT_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* ✅ Select Product */}
           <div>
             <label className="block text-gray-400 mb-2 text-sm font-medium">
@@ -102,7 +149,7 @@ export default function AdjustQuantity() {
               className={inputClass}
             >
               <option value="">-- Choose a product --</option>
-              {products.map((p) => (
+              {filteredProducts.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.itemName} (Qty: {p.quantity})
                 </option>
@@ -164,6 +211,10 @@ function AnimateSelectedProduct({ product }) {
       <p className="text-gray-300 text-lg mb-2">
         <span className="font-semibold text-blue-400">Item:</span>{" "}
         {product.itemName}
+      </p>
+      <p className="text-gray-300 text-lg mb-2">
+        <span className="font-semibold text-yellow-400">Category:</span>{" "}
+        {product.category}
       </p>
       <p className="text-gray-300 text-lg">
         <span className="font-semibold text-green-400">Current Quantity:</span>{" "}

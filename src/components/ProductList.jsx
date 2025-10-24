@@ -41,6 +41,15 @@ export default function ProductList() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const [category, setCategory] = useState("");
+  const [totalPages, setTotalPages] = useState(1);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const PRODUCT_TYPES = [
+    "Books", "Movies", "Music", "Games", "Electronics", "Computers", "Home",
+    "Garden", "Tools", "Grocery", "Health", "Beauty", "Toys", "Kids", "Baby",
+    "Clothing", "Shoes", "Jewelery", "Sports", "Outdoors", "Automotive", "Industrial"
+  ];
 
   /* Pagination States */
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,13 +58,13 @@ export default function ProductList() {
   const hasSelection = selectedIds.length > 0;
 
   /* ---------------- Load All Products ---------------- */
-  const loadProducts = useCallback(async () => {
+  const loadProducts = useCallback(async (page = 0) => {
     setLoading(true);
     try {
-      const data = await getAllProducts();
-      setProducts(data || []);
-      setFiltered(data || []);
-      setCurrentPage(1);
+      const data = await getAllProducts(page, productsPerPage);
+      setProducts(data?.content || []);
+      setFiltered(data?.content || []);
+      setTotalPages(data?.totalPages || 1);
     } catch {
       toast.error("Failed to load products.");
     } finally {
@@ -63,29 +72,35 @@ export default function ProductList() {
     }
   }, []);
 
+  /* ---------------- Initial Load ---------------- */
   useEffect(() => {
-    loadProducts();
+    loadProducts(0);
   }, [loadProducts]);
 
   /* ---------------- Search Products ---------------- */
   const handleSearch = useCallback(async () => {
     setLoading(true);
     try {
-      if (!searchQuery.trim()) {
-        setFiltered(products);
+      if (!searchQuery.trim() && !category.trim()) {
+        setIsSearching(false);
         setCurrentPage(1);
+        await loadProducts(0);
         return;
       }
-      const results = await getProduct(searchQuery.trim());
-      setFiltered(results?.length ? results : []);
+
+      setIsSearching(true);
       setCurrentPage(1);
-      if (!results?.length) toast("No matching products found.");
+      const results = await getProduct(searchQuery.trim(), category.trim(), 0, productsPerPage);
+      setFiltered(results?.content || []);
+      setTotalPages(results?.totalPages || 1);
+
+      if (!results?.content?.length) toast("No matching products found.");
     } catch {
       toast.error("Search failed.");
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, products]);
+  }, [searchQuery, category, loadProducts]);
 
   /* ---------------- Delete Logic ---------------- */
   const handleDelete = async (id) => {
@@ -95,7 +110,16 @@ export default function ProductList() {
       await deleteProduct(id);
       toast.success("Product deleted successfully!");
       setSelectedIds((prev) => prev.filter((pid) => pid !== id));
-      await loadProducts();
+      if (isSearching) {
+        const results = await getProduct(searchQuery.trim(), category.trim(), currentPage - 1, productsPerPage);
+        setFiltered(results?.content || []);
+        setTotalPages(results?.totalPages || 1);
+        if (!results?.content?.length && currentPage > 1) {
+          setCurrentPage(currentPage - 1);
+        }
+      } else {
+        await loadProducts(currentPage - 1);
+      }
     } catch {
       toast.error("Failed to delete product.");
     } finally {
@@ -112,7 +136,16 @@ export default function ProductList() {
       await Promise.all(selectedIds.map((id) => deleteProduct(id)));
       toast.success(`${selectedIds.length} product(s) deleted.`);
       setSelectedIds([]);
-      await loadProducts();
+      if (isSearching) {
+        const results = await getProduct(searchQuery.trim(), category.trim(), currentPage - 1, productsPerPage);
+        setFiltered(results?.content || []);
+        setTotalPages(results?.totalPages || 1);
+        if (!results?.content?.length && currentPage > 1) {
+          setCurrentPage(currentPage - 1);
+        }
+      } else {
+        await loadProducts(currentPage - 1);
+      }
     } catch {
       toast.error("Failed to delete selected products.");
     } finally {
@@ -121,14 +154,25 @@ export default function ProductList() {
   };
 
   /* ---------------- Pagination Logic ---------------- */
-  const totalPages = Math.ceil(filtered.length / productsPerPage) || 1;
-  const indexOfLastProduct = currentPage * productsPerPage;
-  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = filtered.slice(indexOfFirstProduct, indexOfLastProduct);
+  const currentProducts = filtered;
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = async (newPage) => {
     setCurrentPage(newPage);
-    setSelectedIds([]); // ✅ Clear selected items on page change
+    setSelectedIds([]);
+    if (isSearching) {
+      setLoading(true);
+      try {
+        const results = await getProduct(searchQuery.trim(), category.trim(), newPage - 1, productsPerPage);
+        setFiltered(results?.content || []);
+        setTotalPages(results?.totalPages || 1);
+      } catch {
+        toast.error("Failed to load page.");
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      await loadProducts(newPage - 1);
+    }
   };
 
   /* ---------------- Checkbox Logic ---------------- */
@@ -148,10 +192,8 @@ export default function ProductList() {
 
   const toggleSelectAll = () => {
     if (allSelectedOnPage) {
-      // remove current page ids from selectedIds
       setSelectedIds((prev) => prev.filter((id) => !currentPageIds.includes(id)));
     } else {
-      // add current page ids to selectedIds without duplicates
       setSelectedIds((prev) => {
         const s = new Set(prev);
         currentPageIds.forEach((id) => s.add(id));
@@ -199,12 +241,26 @@ export default function ProductList() {
           <div className="flex w-full md:flex-1 gap-2">
             <input
               type="text"
-              placeholder="🔍 Search product..."
+              placeholder="🔍 Search by name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               className="bg-gray-800 text-white placeholder-gray-400 border border-gray-700 px-3 py-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
+
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="bg-gray-800 text-white border border-gray-700 px-3 py-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              <option value="">📁 All Categories</option>
+              {PRODUCT_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+
             <button
               onClick={handleSearch}
               disabled={loading}

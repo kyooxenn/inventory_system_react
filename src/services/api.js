@@ -2,7 +2,9 @@ import axios from "axios";
 import { getToken } from "./auth.js";
 
 // ✅ Use your deployed backend
-const API_BASE_URL = "https://inventory-system-springboot-sea.onrender.com/v1/product";
+//const API_BASE_URL = "https://inventory-system-springboot-sea.onrender.com/v1/product";
+
+const API_BASE_URL = "http://localhost:8080/v1/product";
 
 // Helper to include Authorization header
 const authHeader = () => ({
@@ -12,16 +14,21 @@ const authHeader = () => ({
   },
 });
 
-export const getAllProducts = async () => {
-  const response = await axios.get(API_BASE_URL, authHeader());
-  return response.data;
+// Get all products with pagination
+export const getAllProducts = async (page = 0, size = 10, sort = "itemName,asc") => {
+  const response = await axios.get(API_BASE_URL, {
+    params: { page, size, sort },
+    ...authHeader(),
+  });
+  return response.data; // this includes content, totalPages, totalElements, etc.
 };
 
-export const getProduct = async (itemName) => {
-  const response = await axios.get(
-    `${API_BASE_URL}/details/${itemName}`,
-    authHeader()
-  );
+// Search products with pagination and filters
+export const getProduct = async (itemName = "", category = "", page = 0, size = 10, sort = "itemName,asc") => {
+  const response = await axios.get(`${API_BASE_URL}/search`, {
+    params: { itemName, category, page, size, sort },
+    ...authHeader(),
+  });
   return response.data;
 };
 

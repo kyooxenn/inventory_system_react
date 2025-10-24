@@ -7,18 +7,41 @@ import { toast } from "react-hot-toast";
 import { LogOut } from "lucide-react";
 
 export default function Dashboard() {
-  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dateTime, setDateTime] = useState(() => new Date());
   const [username, setUsername] = useState(() => localStorage.getItem("username") || "");
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalValue, setTotalValue] = useState(0);
+  const [totalQuantity, setTotalQuantity] = useState(0);
   const navigate = useNavigate();
 
-  /** ✅ Load products once */
-  const loadProducts = useCallback(async () => {
+  /** ✅ Load all products and calculate totals */
+  const loadTotals = useCallback(async () => {
     setLoading(true);
     try {
-      const all = await getAllProducts();
-      setProducts(all);
+      let allProducts = [];
+      let page = 0;
+      let totalPages = 1;
+
+      // Fetch all pages to get all products
+      while (page < totalPages) {
+        const data = await getAllProducts(page, 1000);  // Large size to minimize requests
+        allProducts = [...allProducts, ...(data?.content || [])];
+        totalPages = data?.totalPages || 1;
+        page++;
+      }
+
+      // Calculate totals from all products
+      let value = 0;
+      let qty = 0;
+      for (const p of allProducts) {
+        value += (p.unitPrice || 0) * (p.quantity || 0);
+        qty += p.quantity || 0;
+      }
+
+      setTotalItems(allProducts.length);
+      setTotalValue(value);
+      setTotalQuantity(qty);
     } catch {
       toast.error("Failed to load inventory data.");
     } finally {
@@ -27,29 +50,14 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
+    loadTotals();
+  }, [loadTotals]);
 
   /** ✅ Update date/time every second */
   useEffect(() => {
     const interval = setInterval(() => setDateTime(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
-
-  /** ✅ Derived values with useMemo to prevent re-calculation on every render */
-  const { totalValue, totalQuantity, totalItems } = useMemo(() => {
-    let value = 0;
-    let qty = 0;
-    for (const p of products) {
-      value += p.unitPrice * p.quantity;
-      qty += p.quantity;
-    }
-    return {
-      totalValue: value,
-      totalQuantity: qty,
-      totalItems: products.length,
-    };
-  }, [products]);
 
   /** ✅ Logout handler */
   const handleLogout = useCallback(() => {
@@ -61,36 +69,36 @@ export default function Dashboard() {
 
   return (
     <>
-     <motion.div
-       initial={{ opacity: 0, y: -10 }}
-       animate={{ opacity: 1, y: 0 }}
-       transition={{ duration: 0.5, ease: "easeOut" }}
-       className="w-full bg-gray-900 py-3 px-4 shadow-md flex items-center justify-between border-b border-gray-800"
-     >
-       {/* Welcome Message */}
-       {username && (
-         <motion.div
-           initial={{ opacity: 0, x: -10 }}
-           animate={{ opacity: 1, x: 0 }}
-           transition={{ duration: 0.6 }}
-           className="text-white text-sm sm:text-base font-medium mt-[20px] sm:mt-1"
-         >
-           👋 Welcome, <span className="text-blue-400 font-semibold">{username}</span>
-         </motion.div>
-       )}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="w-full bg-gray-900 py-3 px-4 shadow-md flex items-center justify-between border-b border-gray-800"
+      >
+        {/* Welcome Message */}
+        {username && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-white text-sm sm:text-base font-medium mt-[20px] sm:mt-1"
+          >
+            👋 Welcome, <span className="text-blue-400 font-semibold">{username}</span>
+          </motion.div>
+        )}
 
-       {/* Logout */}
-       <motion.div
-         whileHover={{ scale: 1.05 }}
-         whileTap={{ scale: 0.95 }}
-         onClick={handleLogout}
-         className="flex items-center gap-1 text-white hover:text-blue-400 cursor-pointer
-                    text-sm sm:text-base font-medium transition-colors duration-200 mt-[20px] sm:mt-1"
-       >
-         <LogOut className="w-4 h-4" />
-         <span>Log out</span>
-       </motion.div>
-     </motion.div>
+        {/* Logout */}
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleLogout}
+          className="flex items-center gap-1 text-white hover:text-blue-400 cursor-pointer
+                     text-sm sm:text-base font-medium transition-colors duration-200 mt-[20px] sm:mt-1"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Log out</span>
+        </motion.div>
+      </motion.div>
 
       {/* ✅ Dashboard Main */}
       <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between pb-24">
@@ -172,7 +180,7 @@ export default function Dashboard() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="fixed bottom-0 left-0 w-full bg-gray-900 text-gray-400 text-sm py-3 text-center shadow-inner"
         >
-          © {new Date().getFullYear()} Norbert Jon Bobila | {" "}
+          © {new Date().getFullYear()} Norbert Jon Bobila |{" "}
           <span className="text-blue-400">All rights reserved.</span>
         </motion.footer>
       </div>
