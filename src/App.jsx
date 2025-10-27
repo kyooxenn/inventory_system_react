@@ -6,6 +6,7 @@ import UpdateProduct from "./components/UpdateProduct";
 import Dashboard from "./components/Dashboard";
 import AdjustQuantity from "./components/AdjustQuantity";
 import Login from "./components/Login";
+import VerifyOtp from "./components/VerifyOtp";
 import Register from "./components/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { checkTokenExpiry } from "/src/utils/checkTokenExpiry.js";
@@ -31,6 +32,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
 
         {/* Protected Routes */}
         <Route

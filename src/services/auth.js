@@ -1,21 +1,31 @@
 import axios from "axios";
 
-//const API_BASE_URL = "http://localhost:8080/api/auth"; // adjust if needed
+const API_BASE_URL = "http://localhost:8080/api/auth"; // adjust if needed
 
 //deploy online render
-const API_BASE_URL = "https://inventory-system-springboot-sea.onrender.com/api/auth";
+//const API_BASE_URL = "https://inventory-system-springboot-sea.onrender.com/api/auth";
 
-// ✅ LOGIN
+// ✅ LOGIN (Step 1: request OTP)
 export const login = async (username, password) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/login`, { username, password });
 
-    if (response.status === 200 && response.data.token) {
-      localStorage.setItem("token", response.data.token);
-      return response.data; // { token: "..." }
-    } else {
-      throw new Error(response.data.error || "Login failed");
+    // Case 1: If OTP verification step is required
+    if (response.data.tempToken) {
+      return {
+        message: response.data.message,
+        tempToken: response.data.tempToken,
+        requiresOtp: true,
+      };
     }
+
+    // Case 2: If JWT token is directly returned (no OTP flow)
+    if (response.data.token) {
+      localStorage.setItem("token", response.data.token);
+      return { token: response.data.token, requiresOtp: false };
+    }
+
+    throw new Error("Unexpected response from server");
   } catch (error) {
     const message =
       error.response?.data?.error ||
@@ -27,9 +37,9 @@ export const login = async (username, password) => {
 };
 
 // ✅ REGISTER
-export const register = async (username, password) => {
+export const register = async (username, password, email, mobile) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/register`, { username, password });
+    const response = await axios.post(`${API_BASE_URL}/register`, { username, password, email, mobile });
 
     if (response.status === 201 || response.status === 200) {
       return response.data.message || "Registration successful!";
@@ -46,8 +56,35 @@ export const register = async (username, password) => {
   }
 };
 
+
+// ✅ VERIFY OTP (Step 2: verify and get JWT)
+export const verifyOtp = async (tempToken, otp) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/verify-otp`, {
+      tempToken,
+      otp,
+    });
+
+    if (response.status === 200 && response.data.token) {
+      localStorage.setItem("token", response.data.token);
+      return response.data; // { token: "..." }
+    } else {
+      throw new Error(response.data.error || "OTP verification failed");
+    }
+  } catch (error) {
+    const message =
+      error.response?.data?.error ||
+      (error.response?.status === 401
+        ? "Invalid or expired OTP"
+        : "OTP verification failed");
+    throw new Error(message);
+  }
+};
+
+// ✅ LOGOUT
 export const logout = () => {
   localStorage.removeItem("token");
 };
 
+// ✅ GET STORED TOKEN
 export const getToken = () => localStorage.getItem("token");

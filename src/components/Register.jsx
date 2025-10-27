@@ -3,35 +3,57 @@ import { register } from "/src/services/auth.js";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { UserPlus, LogIn } from "lucide-react";
+import { UserPlus } from "lucide-react";
+import countries from "country-list-with-dial-code-and-flag";
+import { isValidPhoneNumber, parsePhoneNumberFromString } from "libphonenumber-js";
 
 export default function Register() {
-  const [form, setForm] = useState({ username: "", password: "" });
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+    email: "",
+    mobile: "",
+    countryCode: "+63",
+  });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ Input handler
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ Form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      await register(form.username.trim(), form.password.trim());
+      const fullMobile = `${form.countryCode}${form.mobile}`;
+      const parsedNumber = parsePhoneNumberFromString(fullMobile);
+
+      // ✅ Validate using libphonenumber-js
+      if (!parsedNumber || !isValidPhoneNumber(fullMobile)) {
+        toast.error("Please enter a valid mobile number for the selected country.");
+        setLoading(false);
+        return;
+      }
+
+      await register(
+        form.username.trim(),
+        form.password.trim(),
+        form.email.trim(),
+        parsedNumber.number // standardized E.164 format (e.g., +639123456789)
+      );
+
       toast.success("Registration successful! You can now log in.");
       navigate("/login");
     } catch (err) {
-      toast.error(err?.message || "Username already exists.");
+      toast.error(err?.message || "Username or email already exists.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Animations (memoized)
   const formVariants = useMemo(
     () => ({
       initial: { opacity: 0, y: 20, scale: 0.98 },
@@ -41,7 +63,6 @@ export default function Register() {
     []
   );
 
-  // ✅ Loader animation
   const InlineLoader = () => (
     <motion.div
       initial={{ opacity: 0 }}
@@ -57,7 +78,6 @@ export default function Register() {
     </motion.div>
   );
 
-  // ✅ Shared styles
   const inputClass =
     "w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-400 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500";
   const buttonClass =
@@ -83,7 +103,7 @@ export default function Register() {
             transition={{ duration: 0.4 }}
             className={loading ? "pointer-events-none opacity-50" : ""}
           >
-            {/* ✅ Header */}
+            {/* Header */}
             <div className="text-center mb-8">
               <motion.div
                 whileHover={{ scale: 1.1, rotate: 3 }}
@@ -100,7 +120,7 @@ export default function Register() {
               </p>
             </div>
 
-            {/* ✅ Form */}
+            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="text"
@@ -111,6 +131,50 @@ export default function Register() {
                 onChange={handleChange}
                 required
               />
+              <input
+                type="email"
+                name="email"
+                placeholder="Email Address"
+                className={inputClass}
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
+
+              {/* ✅ Mobile input with country code */}
+              <div className="flex items-center w-full">
+                <div className="flex-shrink-0">
+                  <select
+                    name="countryCode"
+                    value={form.countryCode}
+                    onChange={handleChange}
+                    className="h-12 w-24 bg-gray-800 border border-gray-700 text-white text-sm px-2 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {countries.getAll().map((c, index) => (
+                      <option key={`${c.code}-${index}`} value={c.dial_code}>
+                        {c.flag} {c.dial_code}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <input
+                  type="tel"
+                  name="mobile"
+                  placeholder="Mobile Number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  title="Enter a valid mobile number"
+                  className="h-12 w-full bg-gray-800 border border-l-0 border-gray-700 text-white placeholder-gray-400 p-3 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={form.mobile}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "");
+                    setForm((prev) => ({ ...prev, mobile: value }));
+                  }}
+                  required
+                />
+              </div>
+
               <input
                 type="password"
                 name="password"
@@ -132,7 +196,7 @@ export default function Register() {
               </motion.button>
             </form>
 
-            {/* ✅ Toggle to Login */}
+            {/* Toggle to Login */}
             <div className="text-center mt-6 text-gray-400">
               Already have an account?{" "}
               <motion.button
@@ -147,7 +211,7 @@ export default function Register() {
           </motion.div>
         </AnimatePresence>
 
-        {/* ✅ Footer */}
+        {/* Footer */}
         <motion.footer
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
