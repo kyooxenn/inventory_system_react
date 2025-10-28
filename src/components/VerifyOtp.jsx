@@ -3,7 +3,7 @@ import { verifyOtp } from "/src/services/auth.js";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { KeyRound } from "lucide-react";
+import { KeyRound, MailWarning } from "lucide-react"; // 👈 added icon
 
 export default function VerifyOtp() {
   const navigate = useNavigate();
@@ -80,6 +80,21 @@ export default function VerifyOtp() {
             <p className="text-gray-400 text-sm">
               Please enter the 6-digit OTP sent to your email.
             </p>
+
+            {/* 👇 Added reminder message */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-3 flex items-center justify-center gap-2 text-xs text-yellow-400 bg-yellow-900/20 border border-yellow-700/40 rounded-lg p-2"
+            >
+              <MailWarning size={14} />
+              <span>
+                Didn’t receive it? Check your <strong>Spam</strong> or{" "}
+                <strong>Junk</strong> folder.
+              </span>
+            </motion.div>
+            {/* 👆 End of added message */}
           </div>
 
           {/* Form */}
