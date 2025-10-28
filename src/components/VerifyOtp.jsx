@@ -3,7 +3,7 @@ import { verifyOtp } from "/src/services/auth.js";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { KeyRound, MailWarning } from "lucide-react"; // 👈 added icon
+import { KeyRound, MailWarning } from "lucide-react";
 
 export default function VerifyOtp() {
   const navigate = useNavigate();
@@ -77,15 +77,28 @@ export default function VerifyOtp() {
             <h2 className="text-3xl font-bold text-blue-400 mb-1">
               Verify OTP
             </h2>
-            <p className="text-gray-400 text-sm">
-              Please enter the 6-digit OTP sent to your email.
+            <p className="text-gray-400 text-sm mb-3">
+              Please enter the 6-digit OTP sent to your registered email address.
             </p>
 
-            {/* 👇 Added reminder message */}
+            {/* 👇 Added meaningful verification message */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
+              className="mt-2 text-xs text-center text-blue-300 bg-blue-900/20 border border-blue-700/30 rounded-lg p-3"
+            >
+              <p>
+                For your security, you need to verify your email before accessing your account.
+                Enter the one-time password we sent to confirm it’s really you.
+              </p>
+            </motion.div>
+
+            {/* 👇 Reminder to check spam folder */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
               className="mt-3 flex items-center justify-center gap-2 text-xs text-yellow-400 bg-yellow-900/20 border border-yellow-700/40 rounded-lg p-2"
             >
               <MailWarning size={14} />
@@ -94,7 +107,6 @@ export default function VerifyOtp() {
                 <strong>Junk</strong> folder.
               </span>
             </motion.div>
-            {/* 👆 End of added message */}
           </div>
 
           {/* Form */}
