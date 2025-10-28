@@ -24,8 +24,7 @@ export default function Login() {
       localStorage.setItem("username", form.username);
 
       if (res.tempToken) {
-        toast("OTP sent to your email", { icon: "✉️" });
-        navigate("/verify-otp", { state: { tempToken: res.tempToken } });
+        navigate("/verify-otp", { state: { tempToken: res.tempToken, email: res.email } });
       } else {
         toast.success("Login successful!");
         navigate("/");

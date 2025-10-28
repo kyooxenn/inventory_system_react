@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { verifyOtp } from "/src/services/auth.js";
+import { useState, useEffect, useRef } from "react";
+import { generateOtp, verifyOtp } from "/src/services/auth.js";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,15 +9,38 @@ export default function VerifyOtp() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get tempToken passed from login page
   const tempToken = location.state?.tempToken;
+  const email = location.state?.email;
+
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendDisabled, setSendDisabled] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const otpInputRef = useRef(null);
 
-  if (!tempToken) {
-    toast.error("Session expired. Please login again.");
-    navigate("/login");
-  }
+  useEffect(() => {
+    if (!tempToken) {
+      toast.error("Session expired. Please login again.");
+      navigate("/login");
+    }
+  }, [tempToken, navigate]);
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            setSendDisabled(false);
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [cooldown]);
 
   const handleVerify = async (e) => {
     e.preventDefault();
@@ -26,9 +49,35 @@ export default function VerifyOtp() {
       const res = await verifyOtp(tempToken, otp.trim());
       localStorage.setItem("token", res.token);
       toast.success("OTP verified successfully!");
-      navigate("/"); // go to dashboard/home
+      navigate("/");
     } catch (err) {
       toast.error(err.message || "Invalid OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    if (!tempToken || !email) {
+      toast.error("Missing session or email.");
+      return;
+    }
+
+    setLoading(true);
+    setSendDisabled(true);
+    setCooldown(60);
+
+    try {
+      const message = await generateOtp(tempToken, email);
+      toast.success(message);
+      setOtpSent(true);
+      setTimeout(() => {
+        if (otpInputRef.current) {
+          otpInputRef.current.focus();
+        }
+      }, 300);
+    } catch (err) {
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -77,59 +126,83 @@ export default function VerifyOtp() {
             <h2 className="text-3xl font-bold text-blue-400 mb-1">
               Verify OTP
             </h2>
-            <p className="text-gray-400 text-sm mb-3">
-              Please enter the 6-digit OTP sent to your registered email address.
-            </p>
 
-            {/* 👇 Added meaningful verification message */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mt-2 text-xs text-center text-blue-300 bg-blue-900/20 border border-blue-700/30 rounded-lg p-3"
-            >
-              <p>
-                For your security, you need to verify your email before accessing your account.
-                Enter the one-time password we sent to confirm it’s really you.
+            {/* ✅ Show only before OTP is sent */}
+            {!otpSent && (
+              <p className="text-gray-400 text-sm mb-4">
+                To continue, please verify your account first by generating and entering the OTP sent to your email address.
               </p>
-            </motion.div>
+            )}
 
-            {/* 👇 Reminder to check spam folder */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="mt-3 flex items-center justify-center gap-2 text-xs text-yellow-400 bg-yellow-900/20 border border-yellow-700/40 rounded-lg p-2"
-            >
-              <MailWarning size={14} />
-              <span>
-                Didn’t receive it? Check your <strong>Spam</strong> or{" "}
-                <strong>Junk</strong> folder.
-              </span>
-            </motion.div>
-          </div>
+            {otpSent && (
+              <p className="text-gray-400 text-sm mb-3">
+                Please enter the 6-digit OTP sent to your registered email address.
+              </p>
+            )}
 
-          {/* Form */}
-          <form onSubmit={handleVerify} className="space-y-4">
-            <input
-              type="text"
-              name="otp"
-              placeholder="Enter OTP"
-              maxLength={6}
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              className={inputClass}
-              required
-            />
+            {/* Send OTP Button */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
-              type="submit"
-              className={buttonClass}
+              type="button"
+              onClick={handleSendOtp}
+              disabled={sendDisabled}
+              className={`w-full ${
+                sendDisabled ? "bg-gray-600 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+              } transition text-white p-3 rounded-lg font-semibold shadow-md shadow-green-700/30`}
             >
-              Verify OTP
+              {otpSent
+                ? sendDisabled
+                  ? `Resend OTP (${cooldown}s)`
+                  : "Resend OTP"
+                : "Send OTP to Email"}
             </motion.button>
-          </form>
+
+            {/* Important Messages */}
+            {otpSent && (
+              <>
+
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="mt-3 flex items-center justify-center gap-2 text-xs text-yellow-400 bg-yellow-900/20 border border-yellow-700/40 rounded-lg p-2"
+                >
+                  <MailWarning size={14} />
+                  <span>
+                    Didn’t receive it? Check your <strong>Spam</strong> or{" "}
+                    <strong>Junk</strong> folder.
+                  </span>
+                </motion.div>
+              </>
+            )}
+          </div>
+
+          {/* OTP Form */}
+          {otpSent && (
+            <form onSubmit={handleVerify} className="space-y-4">
+              <input
+                ref={otpInputRef}
+                type="text"
+                name="otp"
+                placeholder="Enter OTP"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                className={inputClass}
+                required
+              />
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                type="submit"
+                className={buttonClass}
+              >
+                Verify OTP
+              </motion.button>
+            </form>
+          )}
 
           {/* Footer */}
           <motion.footer

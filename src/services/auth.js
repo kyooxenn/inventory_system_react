@@ -13,8 +13,8 @@ export const login = async (username, password) => {
     // Case 1: If OTP verification step is required
     if (response.data.tempToken) {
       return {
-        message: response.data.message,
         tempToken: response.data.tempToken,
+        email: response.data.email,
         requiresOtp: true,
       };
     }
@@ -35,6 +35,30 @@ export const login = async (username, password) => {
     throw new Error(message);
   }
 };
+
+// ✅ GENERATE OTP (Step 1.5: send OTP to email)
+export const generateOtp = async (tempToken, email) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/generate-otp`, {
+      tempToken,
+      email,
+    });
+
+    if (response.status === 200) {
+      return response.data.message || "OTP sent to your email!";
+    } else {
+      throw new Error(response.data.error || "Failed to send OTP");
+    }
+  } catch (error) {
+    const message =
+      error.response?.data?.error ||
+      (error.response?.status === 401
+        ? "Session expired or invalid"
+        : "Failed to send OTP");
+    throw new Error(message);
+  }
+};
+
 
 // ✅ REGISTER
 export const register = async (username, password, email, mobile) => {
