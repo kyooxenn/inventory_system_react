@@ -82,9 +82,7 @@ export default function AddProduct() {
       navigate("/inventory");
     } catch (err) {
       console.error("Error adding product:", err);
-      const backendMessage =
-        err.response?.data?.errorMessage || "Failed to add product. Please try again.";
-      toast.error(backendMessage);
+      toast.error(err.message || "Failed to add product. Please try again.");
     } finally {
       setLoading(false);
     }

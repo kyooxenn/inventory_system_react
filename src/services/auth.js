@@ -2,7 +2,7 @@ import axios from "axios";
 
 //const API_BASE_URL = "http://localhost:8080/api/auth"; // adjust if needed
 
-//deploy online render
+// ✅ Ensure your deployed frontend is accessible online when rendering the application.
 const API_BASE_URL = "https://inventory-system-springboot-sea.onrender.com/api/auth";
 
 // ✅ LOGIN (Step 1: request OTP)

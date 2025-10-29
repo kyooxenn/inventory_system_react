@@ -112,9 +112,7 @@ export default function UpdateProduct() {
       toast.success("Product updated successfully!");
       navigate("/inventory");
     } catch (err) {
-      const msg =
-        err.response?.data?.errorMessage || "Failed to update product. Please try again.";
-      toast.error(msg);
+      toast.error(err.message || "Failed to update product. Please try again.");
     } finally {
       setLoading((prev) => ({ ...prev, update: false }));
     }

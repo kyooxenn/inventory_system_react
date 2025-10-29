@@ -67,7 +67,7 @@ export default function ProductList() {
       setTotalPages(data?.totalPages || 1);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load products.");
+      toast.error(err.message || "Failed to load products.");
     } finally {
       setLoading(false);
     }
@@ -101,7 +101,7 @@ export default function ProductList() {
       if (!results?.content?.length) toast("No matching products found.");
     } catch (err) {
       console.error(err);
-      toast.error("Search failed.");
+      toast.error(err.message || "Search failed.");
     } finally {
       setLoading(false);
       setTimeout(() => setPageTransitioning(false), 200);
@@ -127,7 +127,7 @@ export default function ProductList() {
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to delete product.");
+      toast.error(err.message || "Failed to delete product.");
     } finally {
       setDeleting(null);
     }
@@ -152,7 +152,7 @@ export default function ProductList() {
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to delete selected products.");
+      toast.error(err.message || "Failed to delete selected products.");
     } finally {
       setLoading(false);
     }
@@ -181,7 +181,7 @@ export default function ProductList() {
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load page.");
+      toast.error(err.message || "Failed to load page.");
     } finally {
       setLoading(false);
       setTimeout(() => setPageTransitioning(false), 200);
