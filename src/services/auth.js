@@ -47,7 +47,7 @@ export const generateOtp = async (tempToken, payload, method) => {
       return response.data || "OTP sent to your Telegram!";
     } else {
       // For email
-      const response = await axios.post(`${API_BASE_URL}/generate-otp`, {
+      const response = await axios.post(`${API_BASE_URL}/send-otp`, {
         tempToken,
         email: payload,
       });
