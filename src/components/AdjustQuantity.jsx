@@ -84,8 +84,8 @@ export default function AdjustQuantity() {
         `Quantity ${type === "increase" ? "increased" : "decreased"} successfully!`
       );
       navigate("/");
-    } catch {
-      toast.error("Failed to adjust quantity.");
+    } catch(err) {
+      toast.error(err.message ||"Failed to adjust quantity.");
     } finally {
       setLoading(false);
     }
