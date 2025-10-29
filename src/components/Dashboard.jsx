@@ -104,7 +104,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-gray-950 text-white flex flex-col justify-between pb-24">
         <div className="px-4 pt-12 text-center">
           <h1 className="text-4xl font-extrabold mb-2 drop-shadow-lg text-blue-400">
-            🧭 Dashboard Overview
+            🧭 N-Vent Dashboard
           </h1>
           <p className="text-gray-400 text-sm font-medium mb-1">
             Monitor and manage your inventory in real time.
