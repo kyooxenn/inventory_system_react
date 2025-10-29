@@ -36,18 +36,22 @@ export const login = async (username, password) => {
   }
 };
 
-// ✅ GENERATE OTP (Step 1.5: send OTP to email)
-export const generateOtp = async (tempToken, email) => {
+// ✅ GENERATE OTP (Updated to support method)
+export const generateOtp = async (tempToken, payload, method) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/generate-otp`, {
-      tempToken,
-      email,
-    });
-
-    if (response.status === 200) {
-      return response.data.message || "OTP sent to your email!";
+    if (method === "telegram") {
+      // For Telegram, call the Telegram endpoint (no payload needed if linked)
+      const response = await axios.post(`${API_BASE_URL.replace('/auth', '/telegram')}/send-otp`, {}, {
+        headers: { Authorization: `Bearer ${tempToken}` } // Adjust if using session
+      });
+      return response.data || "OTP sent to your Telegram!";
     } else {
-      throw new Error(response.data.error || "Failed to send OTP");
+      // For email
+      const response = await axios.post(`${API_BASE_URL}/generate-otp`, {
+        tempToken,
+        email: payload,
+      });
+      return response.data.message || "OTP sent to your email!";
     }
   } catch (error) {
     const message =
@@ -101,6 +105,35 @@ export const verifyOtp = async (tempToken, otp) => {
       (error.response?.status === 401
         ? "Invalid or expired OTP"
         : "OTP verification failed");
+    throw new Error(message);
+  }
+};
+
+// ✅ CHECK TELEGRAM LINK STATUS
+export const checkTelegramLink = async (tempToken) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL.replace('/auth', '/telegram')}/check-link`, {
+      headers: { Authorization: `Bearer ${tempToken}` }
+    });
+    return response.data; // boolean
+  } catch (error) {
+    throw new Error("Failed to check Telegram link status");
+  }
+};
+
+// ✅ GENERATE TELEGRAM LINK CODE
+export const generateTelegramLinkCode = async (tempToken) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL.replace('/auth', '/telegram')}/generate-link-code`, {
+      headers: { Authorization: `Bearer ${tempToken}` }
+    });
+    return response.data; // { code: "...", botUsername: "..." }
+  } catch (error) {
+    const message =
+      error.response?.data?.error ||
+      (error.response?.status === 401
+        ? "Session expired or invalid"
+        : "Failed to generate linking code");
     throw new Error(message);
   }
 };
