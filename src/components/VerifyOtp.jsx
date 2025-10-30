@@ -1,9 +1,21 @@
 import { useState, useEffect, useRef } from "react";
-import { generateOtp, verifyOtp, generateTelegramLinkCode, checkTelegramLink } from "/src/services/auth.js"; // Added checkTelegramLink
+import axios from "axios";
+import {
+  generateOtp,
+  verifyOtp,
+  checkTelegramLink,
+  generateTelegramLinkCode,
+  checkTelegramLinkStatus,
+} from "/src/services/auth.js";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { KeyRound, MailWarning, MessageSquareWarning, Link } from "lucide-react"; // Added Link icon
+import {
+  KeyRound,
+  MailWarning,
+  MessageSquareWarning,
+  Link,
+} from "lucide-react";
 
 export default function VerifyOtp() {
   const navigate = useNavigate();
@@ -19,11 +31,19 @@ export default function VerifyOtp() {
   const [cooldown, setCooldown] = useState(0);
   const otpInputRef = useRef(null);
 
-  // States for method selection and Telegram linking
-  const [method, setMethod] = useState("email"); // Default to email
-  const [telegramLinked, setTelegramLinked] = useState(false); // Track if linked
-  const [linkingCode, setLinkingCode] = useState(""); // For displaying the code
-  const [linkingLoading, setLinkingLoading] = useState(false); // New: Loading state for linking button
+  // Telegram states
+  const [method, setMethod] = useState("email");
+  const [telegramLinked, setTelegramLinked] = useState(false);
+  const [linkingCode, setLinkingCode] = useState("");
+  const [linkingLoading, setLinkingLoading] = useState(false);
+
+  // For UI messages about the linking process (pending/success/already_linked)
+  const [linkStatusMessage, setLinkStatusMessage] = useState("");
+  const [linkStatusType, setLinkStatusType] = useState("info"); // 'info' | 'success' | 'error'
+
+  // Refs for intervals/timeouts so we can clear them on unmount
+  const pollingRef = useRef(null);
+  const stopTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (!tempToken) {
@@ -48,22 +68,117 @@ export default function VerifyOtp() {
     }
   }, [cooldown]);
 
-  // Check Telegram link status on component mount or method change
+  // When user selects "telegram" method, check if this account already has a linked Telegram chat id
   useEffect(() => {
-    if (method === "telegram" && tempToken) {
-      checkTelegramLinkStatus();
-    }
+    let mounted = true;
+    const checkIfUserHasLinkedTelegram = async () => {
+      if (method === "telegram" && tempToken) {
+        try {
+          // This calls your existing service which should check for current user's linked chat id
+          const isLinked = await checkTelegramLink(tempToken);
+          if (!mounted) return;
+          setTelegramLinked(Boolean(isLinked));
+          if (isLinked) {
+            setLinkStatusMessage("✅ Your Telegram account is linked!");
+            setLinkStatusType("success");
+          } else {
+            setLinkStatusMessage("");
+            setLinkStatusType("info");
+          }
+        } catch (err) {
+          console.error("Error checking existing telegram link:", err);
+          if (!mounted) return;
+          setTelegramLinked(false);
+          setLinkStatusMessage("");
+        }
+      }
+    };
+
+    checkIfUserHasLinkedTelegram();
+    return () => {
+      mounted = false;
+    };
   }, [method, tempToken]);
 
-  const checkTelegramLinkStatus = async () => {
-    try {
-      const isLinked = await checkTelegramLink(tempToken);
-      setTelegramLinked(isLinked);
-    } catch (err) {
-      console.error("Error checking Telegram link:", err);
-      setTelegramLinked(false);
+  // Helper: poll your backend's /api/telegram/link-status/{code}
+  const pollLinkStatus = (code) => {
+    // Clear any existing pollers
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
     }
+    if (stopTimeoutRef.current) {
+      clearTimeout(stopTimeoutRef.current);
+      stopTimeoutRef.current = null;
+    }
+
+    // Immediately check once, then set interval
+    const checkOnce = async () => {
+      try {
+        const res = await checkTelegramLinkStatus(code);
+        const status = res.status;
+        if (status === "pending") {
+          setLinkStatusMessage("⏳ Waiting for Telegram link...");
+          setLinkStatusType("info");
+          return false;
+        } else if (status === "success") {
+          setTelegramLinked(true);
+          setLinkStatusMessage("✅ Your Telegram account has been successfully linked!");
+          setLinkStatusType("success");
+          return true;
+        } else if (status === "already_linked") {
+          setTelegramLinked(false);
+          setLinkStatusMessage(
+            "⚠️ This Telegram account is already linked to another user. Please use a different Telegram account and try again."
+          );
+          setLinkStatusType("error");
+          return true;
+        } else {
+          // Unknown status - treat as pending
+          setLinkStatusMessage("⏳ Waiting for Telegram link...");
+          setLinkStatusType("info");
+          return false;
+        }
+      } catch (err) {
+        console.error("Error polling link status:", err);
+        setLinkStatusMessage("❌ Error contacting server. Please try again later.");
+        setLinkStatusType("error");
+        return true; // stop polling on error to avoid noisy requests
+      }
+    };
+
+    // Do immediate check
+    (async () => {
+      const done = await checkOnce();
+      if (done) return;
+      // set interval only if not done
+      pollingRef.current = setInterval(checkOnce, 3000);
+      // stop polling after 30s (safety)
+      stopTimeoutRef.current = setTimeout(() => {
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
+        }
+        setLinkStatusMessage("⌛ Link attempt timed out. Please try again.");
+        setLinkStatusType("error");
+        setLinkingLoading(false);
+      }, 30000);
+    })();
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+      if (stopTimeoutRef.current) {
+        clearTimeout(stopTimeoutRef.current);
+        stopTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const handleVerify = async (e) => {
     e.preventDefault();
@@ -81,58 +196,51 @@ export default function VerifyOtp() {
   };
 
   const handleSendOtp = async () => {
-    if (!tempToken) {
-      toast.error("Missing session.");
-      return;
-    }
-    if (method === "email" && !email) {
-      toast.error("Missing email.");
-      return;
-    }
-    if (method === "telegram" && !telegramLinked) {
-      toast.error("Please link your Telegram account first.");
-      return;
-    }
+    if (!tempToken) return toast.error("Missing session.");
+    if (method === "email" && !email) return toast.error("Missing email.");
+    if (method === "telegram" && !telegramLinked)
+      return toast.error("Please link your Telegram account first.");
 
     setLoading(true);
     setSendDisabled(true);
     setCooldown(60);
 
     try {
-      const payload = method === "email" ? email : null; // No payload needed for Telegram if linked
+      const payload = method === "email" ? email : null;
       const message = await generateOtp(tempToken, payload, method);
       toast.success(message);
       setOtpSent(true);
-      setTimeout(() => {
-        if (otpInputRef.current) {
-          otpInputRef.current.focus();
-        }
-      }, 300);
+      setTimeout(() => otpInputRef.current?.focus(), 300);
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message || "Failed to send OTP");
     } finally {
       setLoading(false);
     }
   };
 
   const handleConnectTelegram = async () => {
-    if (linkingLoading) return; // Prevent multiple clicks
+    if (linkingLoading) return;
     setLinkingLoading(true);
-    try {
-      const data = await generateTelegramLinkCode(tempToken); // Call the auth.js function
-      const { code, botUsername } = data;
-      setLinkingCode(code); // UI: Set state
-      toast.success(`Linking code generated: ${code}. Opening Telegram...`); // UI: Show toast
-      window.open(`https://t.me/${botUsername}?start=${code}`, '_blank'); // UI: Open window
+    setLinkStatusMessage("⏳ Generating linking code and opening Telegram...");
+    setLinkStatusType("info");
 
-      // Re-check link status after 5 seconds (adjust as needed)
-      setTimeout(() => {
-        checkTelegramLinkStatus();
-        setLinkingLoading(false);
-      }, 5000);
+    try {
+      const data = await generateTelegramLinkCode(tempToken);
+      const { code, botUsername } = data;
+      setLinkingCode(code);
+      // open telegram
+      window.open(`https://t.me/${botUsername}?start=${code}`, "_blank");
+
+      // start polling the new endpoint for this code
+      pollLinkStatus(code);
+
+      // ensure loading state is cleared on result via pollLinkStatus or on timeout
     } catch (err) {
-      toast.error(err.message || "Failed to generate linking code."); // UI: Show error
+      console.error("Failed to generate linking code:", err);
+      toast.error(err.message || "Failed to generate linking code.");
       setLinkingLoading(false);
+      setLinkStatusMessage("❌ Failed to generate linking code. Please try again.");
+      setLinkStatusType("error");
     }
   };
 
@@ -176,26 +284,29 @@ export default function VerifyOtp() {
               <KeyRound size={28} />
             </motion.div>
 
-            <h2 className="text-3xl font-bold text-blue-400 mb-1">
-              Verify OTP
-            </h2>
+            <h2 className="text-3xl font-bold text-blue-400 mb-1">Verify OTP</h2>
 
             {!otpSent && (
               <p className="text-gray-400 text-sm mb-4">
-                To continue, please verify your account first by generating and entering the OTP sent to your chosen method.
+                To continue, please verify your account first by generating and
+                entering the OTP sent to your chosen method.
               </p>
             )}
 
             {otpSent && (
               <p className="text-gray-400 text-sm mb-3">
-                Please enter the 6-digit OTP sent to your {method === "email" ? "registered email address" : "Telegram chat"}.
+                Please enter the 6-digit OTP sent to your{" "}
+                {method === "email" ? "registered email address" : "Telegram chat"}
+                .
               </p>
             )}
 
             {/* Method Selection */}
             {!otpSent && (
               <div className="mb-4">
-                <p className="text-gray-400 text-sm mb-2">Choose OTP delivery method:</p>
+                <p className="text-gray-400 text-sm mb-2">
+                  Choose OTP delivery method:
+                </p>
                 <div className="flex justify-center gap-4">
                   <label className="flex items-center gap-2">
                     <input
@@ -227,12 +338,15 @@ export default function VerifyOtp() {
             {!otpSent && method === "telegram" && (
               <>
                 {telegramLinked ? (
-                  <p className="text-green-400 text-sm mb-3">✅ Your Telegram account is linked!</p>
+                  <p className="text-green-400 text-sm mb-3">
+                    ✅ Your Telegram account is linked!
+                  </p>
                 ) : (
                   <>
                     <p className="text-gray-400 text-sm mb-2">
                       Link your Telegram to receive OTPs securely.
                     </p>
+
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.97 }}
@@ -247,10 +361,27 @@ export default function VerifyOtp() {
                       <Link size={16} />
                       {linkingLoading ? "Linking..." : "Connect Telegram"}
                     </motion.button>
+
                     {linkingCode && (
-                      <p className="text-yellow-400 text-xs mb-3">
-                        Code: <strong>{linkingCode}</strong> (send /start {linkingCode} in Telegram if not auto-filled).
+                      <p className="text-yellow-400 text-xs mb-3 break-words">
+                        Code: <strong>{linkingCode}</strong> (send /start{" "}
+                        {linkingCode} in Telegram if not auto-filled).
                       </p>
+                    )}
+
+                    {/* Link status message shown as user polls/after result */}
+                    {linkStatusMessage && (
+                      <div
+                        className={`mt-2 text-sm p-2 rounded ${
+                          linkStatusType === "success"
+                            ? "bg-green-900/20 text-green-300 border border-green-700/40"
+                            : linkStatusType === "error"
+                            ? "bg-red-900/20 text-red-300 border border-red-700/40"
+                            : "bg-gray-900/20 text-gray-300 border border-gray-700/40"
+                        }`}
+                      >
+                        {linkStatusMessage}
+                      </div>
                     )}
                   </>
                 )}
@@ -270,14 +401,10 @@ export default function VerifyOtp() {
                   : "bg-green-600 hover:bg-green-700"
               } transition text-white p-3 rounded-lg font-semibold shadow-md shadow-green-700/30`}
             >
-              {otpSent
-                ? sendDisabled
-                  ? `Resend OTP (${cooldown}s)`
-                  : "Resend OTP"
-                : `Send OTP to ${method === "email" ? "Email" : "Telegram"}`}
+              {otpSent ? (sendDisabled ? `Resend OTP (${cooldown}s)` : "Resend OTP") : `Send OTP to ${method === "email" ? "Email" : "Telegram"}`}
             </motion.button>
 
-            {/* Important Messages */}
+            {/* Info Message */}
             {otpSent && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -297,7 +424,8 @@ export default function VerifyOtp() {
                   <>
                     <MessageSquareWarning size={14} />
                     <span>
-                      Didn’t receive it? Check your Telegram notifications or ensure your account is linked.
+                      Didn’t receive it? Check your Telegram notifications or
+                      ensure your account is linked.
                     </span>
                   </>
                 )}
@@ -319,26 +447,15 @@ export default function VerifyOtp() {
                 className={inputClass}
                 required
               />
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                type="submit"
-                className={buttonClass}
-              >
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} type="submit" className={buttonClass}>
                 Verify OTP
               </motion.button>
             </form>
           )}
 
           {/* Footer */}
-          <motion.footer
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="text-gray-500 text-xs text-center mt-6"
-          >
-            © {new Date().getFullYear()} Norbert Jon Bobila |{" "}
-            <span className="text-blue-400">All rights reserved.</span>
+          <motion.footer initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-gray-500 text-xs text-center mt-6">
+            © {new Date().getFullYear()} Norbert Jon Bobila | <span className="text-blue-400">All rights reserved.</span>
           </motion.footer>
         </div>
       </motion.div>

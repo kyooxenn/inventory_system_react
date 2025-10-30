@@ -1,9 +1,9 @@
 import axios from "axios";
 
-//const API_BASE_URL = "http://localhost:8080/api/auth"; // adjust if needed
+const API_BASE_URL = "http://localhost:8080/api/auth"; // adjust if needed
 
 // ✅ Ensure your deployed frontend is accessible online when rendering the application.
-const API_BASE_URL = "https://inventory-system-springboot-sea.onrender.com/api/auth";
+//const API_BASE_URL = "https://inventory-system-springboot-sea.onrender.com/api/auth";
 
 // ✅ LOGIN (Step 1: request OTP)
 export const login = async (username, password) => {
@@ -137,6 +137,24 @@ export const generateTelegramLinkCode = async (tempToken) => {
     throw new Error(message);
   }
 };
+
+// ✅ CHECK TELEGRAM LINK STATUS
+export const checkTelegramLinkStatus = async (code) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL.replace('/auth', '/telegram')}/link-status/${code}`
+    );
+    return response.data; // { status: "pending" | "success" | "already_linked" }
+  } catch (error) {
+    const message =
+      error.response?.data?.error ||
+      (error.response?.status === 404
+        ? "Link code not found or expired"
+        : "Failed to check Telegram link status");
+    throw new Error(message);
+  }
+};
+
 
 // ✅ LOGOUT
 export const logout = () => {
