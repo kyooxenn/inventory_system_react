@@ -104,13 +104,11 @@ export default function VerifyOtp() {
 
   // Helper: poll your backend's /api/telegram/link-status/{code}
   const pollLinkStatus = (code) => {
-    // Clear any existing pollers
     if (pollingRef.current) clearInterval(pollingRef.current);
     if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
 
     setRemainingSeconds(120);
 
-    // ⏳ Countdown timer for 1 minute
     const countdownTimer = setInterval(() => {
       setRemainingSeconds((prev) => {
         if (prev <= 1) {
@@ -121,86 +119,58 @@ export default function VerifyOtp() {
       });
     }, 1000);
 
+    const stopAll = (message = "", type = "info", resetCode = false) => {
+      clearInterval(countdownTimer);
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
+      pollingRef.current = null;
+      stopTimeoutRef.current = null;
+      setLinkStatusMessage(message);
+      setLinkStatusType(type);
+      setLinkingLoading(false);
+      if (resetCode) setLinkingCode("");
+      setRemainingSeconds(0);
+    };
+
     const checkOnce = async () => {
       try {
         const res = await checkTelegramLinkStatus(code);
         const status = res.status;
 
-        if (status === "pending") {
-          return false; // keep waiting
-        } else if (status === "success") {
-          clearInterval(countdownTimer);
-          clearInterval(pollingRef.current);
-          clearTimeout(stopTimeoutRef.current);
-          pollingRef.current = null;
-          stopTimeoutRef.current = null;
+        if (status === "pending") return false;
 
+        if (status === "success") {
+          stopAll("✅ Your Telegram account has been successfully linked!", "success", true);
           setTelegramLinked(true);
-          setLinkStatusMessage("✅ Your Telegram account has been successfully linked!");
-          setLinkStatusType("success");
-          setLinkingLoading(false);
           return true;
-        } else if (status === "already_linked") {
-          clearInterval(countdownTimer);
-          clearInterval(pollingRef.current);
-          clearTimeout(stopTimeoutRef.current);
-          pollingRef.current = null;
-          stopTimeoutRef.current = null;
-
-          setTelegramLinked(false);
-          let seconds = 10;
-          setLinkStatusMessage(
-            `⚠️ This Telegram account is already linked to another user. Retrying in ${seconds}s...`
-          );
-          setLinkStatusType("error");
-
-          const retryCountdown = setInterval(() => {
-            seconds -= 1;
-            if (seconds > 0) {
-              setLinkStatusMessage(
-                `⚠️ This Telegram account is already linked to another user. Retrying in ${seconds}s...`
-              );
-            } else {
-              clearInterval(retryCountdown);
-              setLinkStatusMessage("");
-              setLinkStatusType("info");
-              setLinkingLoading(false);
-              setLinkingCode("");
-            }
-          }, 1000);
-          return true;
-        } else {
-          return false;
         }
+
+        if (status === "already_linked") {
+          stopAll(
+            "⚠️ This Telegram account is already linked to another user. Please use a different Telegram account or unlink the old one first.",
+            "error",
+            true
+          );
+          return true;
+        }
+
+        return false;
       } catch (err) {
-        clearInterval(countdownTimer);
         console.error("Error polling link status:", err);
-        setLinkStatusMessage("❌ Error contacting server. Please try again later.");
-        setLinkStatusType("error");
-        setLinkingLoading(false);
+        stopAll("❌ Error contacting server. Please try again later.", "error", true);
         return true;
       }
     };
 
-    // Immediate check + interval
     (async () => {
       const done = await checkOnce();
       if (done) return;
 
       pollingRef.current = setInterval(checkOnce, 3000);
 
-      // Auto-stop after 120s
       stopTimeoutRef.current = setTimeout(() => {
-        clearInterval(countdownTimer);
-        clearInterval(pollingRef.current);
-        pollingRef.current = null;
-
-        setLinkStatusMessage("⌛ Link attempt timed out after 2 minutes. Please try again.");
-        setLinkStatusType("error");
-        setLinkingLoading(false);
-        setLinkingCode(""); // 👈 hides the manual /start code box
+        stopAll("⌛ Link attempt timed out after 2 minutes. Please try again.", "error", true);
       }, 120000);
-
     })();
   };
 
