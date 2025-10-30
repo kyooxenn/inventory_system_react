@@ -130,8 +130,8 @@ export const generateTelegramLinkCode = async (tempToken) => {
     return response.data; // { code: "...", botUsername: "..." }
   } catch (error) {
     const message =
-      error.response?.data?.error ||
-      (error.response?.status === 401
+      error.message ||
+      (error.status === 401
         ? "Session expired or invalid"
         : "Failed to generate linking code");
     throw new Error(message);
