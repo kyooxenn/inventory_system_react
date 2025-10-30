@@ -30,6 +30,8 @@ export default function VerifyOtp() {
   const [sendDisabled, setSendDisabled] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const otpInputRef = useRef(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(60);
+  const [totalSeconds] = useState(60);
 
   // Telegram states
   const [method, setMethod] = useState("email");
@@ -103,68 +105,103 @@ export default function VerifyOtp() {
   // Helper: poll your backend's /api/telegram/link-status/{code}
   const pollLinkStatus = (code) => {
     // Clear any existing pollers
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    }
-    if (stopTimeoutRef.current) {
-      clearTimeout(stopTimeoutRef.current);
-      stopTimeoutRef.current = null;
-    }
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
 
-    // Immediately check once, then set interval
+    setRemainingSeconds(60);
+
+    // ⏳ Countdown timer for 1 minute
+    const countdownTimer = setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownTimer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
     const checkOnce = async () => {
       try {
         const res = await checkTelegramLinkStatus(code);
         const status = res.status;
+
         if (status === "pending") {
-          setLinkStatusMessage("⏳ Waiting for Telegram link...");
-          setLinkStatusType("info");
-          return false;
+          return false; // keep waiting
         } else if (status === "success") {
+          clearInterval(countdownTimer);
+          clearInterval(pollingRef.current);
+          clearTimeout(stopTimeoutRef.current);
+          pollingRef.current = null;
+          stopTimeoutRef.current = null;
+
           setTelegramLinked(true);
           setLinkStatusMessage("✅ Your Telegram account has been successfully linked!");
           setLinkStatusType("success");
+          setLinkingLoading(false);
           return true;
         } else if (status === "already_linked") {
+          clearInterval(countdownTimer);
+          clearInterval(pollingRef.current);
+          clearTimeout(stopTimeoutRef.current);
+          pollingRef.current = null;
+          stopTimeoutRef.current = null;
+
           setTelegramLinked(false);
+          let seconds = 10;
           setLinkStatusMessage(
-            "⚠️ This Telegram account is already linked to another user. Please use a different Telegram account and try again."
+            `⚠️ This Telegram account is already linked to another user. Retrying in ${seconds}s...`
           );
           setLinkStatusType("error");
+
+          const retryCountdown = setInterval(() => {
+            seconds -= 1;
+            if (seconds > 0) {
+              setLinkStatusMessage(
+                `⚠️ This Telegram account is already linked to another user. Retrying in ${seconds}s...`
+              );
+            } else {
+              clearInterval(retryCountdown);
+              setLinkStatusMessage("");
+              setLinkStatusType("info");
+              setLinkingLoading(false);
+              setLinkingCode("");
+            }
+          }, 1000);
           return true;
         } else {
-          // Unknown status - treat as pending
-          setLinkStatusMessage("⏳ Waiting for Telegram link...");
-          setLinkStatusType("info");
           return false;
         }
       } catch (err) {
+        clearInterval(countdownTimer);
         console.error("Error polling link status:", err);
         setLinkStatusMessage("❌ Error contacting server. Please try again later.");
         setLinkStatusType("error");
-        return true; // stop polling on error to avoid noisy requests
+        setLinkingLoading(false);
+        return true;
       }
     };
 
-    // Do immediate check
+    // Immediate check + interval
     (async () => {
       const done = await checkOnce();
       if (done) return;
-      // set interval only if not done
+
       pollingRef.current = setInterval(checkOnce, 3000);
-      // stop polling after 30s (safety)
+
+      // Auto-stop after 60s
       stopTimeoutRef.current = setTimeout(() => {
-        if (pollingRef.current) {
-          clearInterval(pollingRef.current);
-          pollingRef.current = null;
-        }
-        setLinkStatusMessage("⌛ Link attempt timed out. Please try again.");
+        clearInterval(countdownTimer);
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+        setLinkStatusMessage("⌛ Link attempt timed out after 1 minute. Please try again.");
         setLinkStatusType("error");
         setLinkingLoading(false);
-      }, 30000);
+      }, 60000);
     })();
   };
+
+
 
   // Cleanup on unmount
   useEffect(() => {
@@ -352,14 +389,42 @@ export default function VerifyOtp() {
                       whileTap={{ scale: 0.97 }}
                       onClick={handleConnectTelegram}
                       disabled={linkingLoading}
-                      className={`w-full transition text-white p-3 rounded-lg font-semibold shadow-md mb-2 flex items-center justify-center gap-2 ${
+                      className={`w-full transition text-white p-3 rounded-lg font-semibold shadow-md mb-3 flex flex-col items-center justify-center gap-2 ${
                         linkingLoading
                           ? "bg-gray-600 cursor-not-allowed"
                           : "bg-green-600 hover:bg-green-700 shadow-green-700/30"
                       }`}
                     >
-                      <Link size={16} />
-                      {linkingLoading ? "Linking..." : "Connect Telegram"}
+                      <div className="flex items-center justify-center gap-2">
+                        <Link size={16} />
+                        <span>
+                          {linkingLoading ? "Connecting to Telegram…" : "Link Telegram Account"}
+                        </span>
+                      </div>
+
+                      {/* Show status + countdown while linking */}
+                      {linkingLoading && (
+                        <div className="mt-3 w-full text-center">
+                          <p className="text-sm text-gray-300">
+                            {linkStatusMessage || "Waiting for confirmation from Telegram…"}
+                          </p>
+
+                          <p className="text-xs text-gray-400 mt-1">
+                            {remainingSeconds > 0
+                              ? `${remainingSeconds} seconds remaining`
+                              : "The linking process timed out."}
+                          </p>
+
+                          <div className="w-full bg-gray-700 rounded-full h-2 mt-2 overflow-hidden">
+                            <div
+                              className="h-2 bg-blue-500 transition-all duration-1000 ease-linear"
+                              style={{
+                                width: `${((totalSeconds - remainingSeconds) / totalSeconds) * 100}%`,
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      )}
                     </motion.button>
 
                     {linkingCode && (
