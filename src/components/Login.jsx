@@ -3,11 +3,12 @@ import { login } from "/src/services/auth.js";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogIn } from "lucide-react";
+import { LogIn, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   const [form, setForm] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   // ✅ Handle input changes
@@ -115,15 +116,27 @@ export default function Login() {
               onChange={handleChange}
               required
             />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              className={inputClass}
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
+
+            {/* 👁️ Password input with toggle */}
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+                className={`${inputClass} pr-10`}
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-200"
+                tabIndex={-1} // prevents tab focus from jumping
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
 
             <motion.button
               whileHover={{ scale: 1.02 }}

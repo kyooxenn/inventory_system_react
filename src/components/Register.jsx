@@ -3,7 +3,7 @@ import { register } from "/src/services/auth.js";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Eye, EyeOff } from "lucide-react";
 import countries from "country-list-with-dial-code-and-flag";
 import { isValidPhoneNumber, parsePhoneNumberFromString } from "libphonenumber-js";
 
@@ -16,6 +16,7 @@ export default function Register() {
     countryCode: "+63",
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -42,7 +43,7 @@ export default function Register() {
         form.username.trim(),
         form.password.trim(),
         form.email.trim(),
-        parsedNumber.number // standardized E.164 format (e.g., +639123456789)
+        parsedNumber.number
       );
 
       toast.success("Registration successful! You can now log in.");
@@ -112,9 +113,7 @@ export default function Register() {
                 <UserPlus size={28} />
               </motion.div>
 
-              <h2 className="text-3xl font-bold text-blue-400 mb-1">
-                Create Account
-              </h2>
+              <h2 className="text-3xl font-bold text-blue-400 mb-1">Create Account</h2>
               <p className="text-gray-400 text-sm">
                 Join our platform and manage your inventory smarter.
               </p>
@@ -175,15 +174,26 @@ export default function Register() {
                 />
               </div>
 
-              <input
-                type="password"
-                name="password"
-                placeholder="Password"
-                className={inputClass}
-                value={form.password}
-                onChange={handleChange}
-                required
-              />
+              {/* ✅ Password input with toggle */}
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Password"
+                  className={`${inputClass} pr-10`}
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-200 focus:outline-none"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
 
               <motion.button
                 whileHover={{ scale: 1.02 }}

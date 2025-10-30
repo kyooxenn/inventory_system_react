@@ -30,8 +30,8 @@ export default function VerifyOtp() {
   const [sendDisabled, setSendDisabled] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const otpInputRef = useRef(null);
-  const [remainingSeconds, setRemainingSeconds] = useState(60);
-  const [totalSeconds] = useState(60);
+  const [remainingSeconds, setRemainingSeconds] = useState(120);
+  const [totalSeconds] = useState(120);
 
   // Telegram states
   const [method, setMethod] = useState("email");
@@ -108,7 +108,7 @@ export default function VerifyOtp() {
     if (pollingRef.current) clearInterval(pollingRef.current);
     if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
 
-    setRemainingSeconds(60);
+    setRemainingSeconds(120);
 
     // ⏳ Countdown timer for 1 minute
     const countdownTimer = setInterval(() => {
@@ -189,15 +189,18 @@ export default function VerifyOtp() {
 
       pollingRef.current = setInterval(checkOnce, 3000);
 
-      // Auto-stop after 60s
+      // Auto-stop after 120s
       stopTimeoutRef.current = setTimeout(() => {
         clearInterval(countdownTimer);
         clearInterval(pollingRef.current);
         pollingRef.current = null;
-        setLinkStatusMessage("⌛ Link attempt timed out after 1 minute. Please try again.");
+
+        setLinkStatusMessage("⌛ Link attempt timed out after 2 minutes. Please try again.");
         setLinkStatusType("error");
         setLinkingLoading(false);
-      }, 60000);
+        setLinkingCode(""); // 👈 hides the manual /start code box
+      }, 120000);
+
     })();
   };
 
@@ -240,7 +243,7 @@ export default function VerifyOtp() {
 
     setLoading(true);
     setSendDisabled(true);
-    setCooldown(60);
+    setCooldown(120);
 
     try {
       const payload = method === "email" ? email : null;
@@ -428,10 +431,22 @@ export default function VerifyOtp() {
                     </motion.button>
 
                     {linkingCode && (
-                      <p className="text-yellow-400 text-xs mb-3 break-words">
-                        Code: <strong>{linkingCode}</strong> (send /start{" "}
-                        {linkingCode} in Telegram if not auto-filled).
-                      </p>
+                      <div className="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 mb-3 text-left">
+                        <p className="text-sm text-gray-300 mb-1">
+                          🧩 <strong>Manual Link Option:</strong>
+                        </p>
+                        <p className="text-xs text-gray-400 mb-2">
+                          If Telegram didn’t open automatically, copy and send the following command to the bot:
+                        </p>
+
+                        <div className="bg-gray-900 border border-gray-700 rounded-md p-2 text-center font-mono text-blue-400 select-all break-all">
+                          /start {linkingCode}
+                        </div>
+
+                        <p className="text-[11px] text-gray-500 mt-2 text-center">
+                          (Tap the code above to copy — then paste it into the Telegram chat with the bot.)
+                        </p>
+                      </div>
                     )}
 
                     {/* Link status message shown as user polls/after result */}
