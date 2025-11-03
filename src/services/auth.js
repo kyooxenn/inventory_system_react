@@ -44,7 +44,7 @@ export const generateOtp = async (tempToken, payload, method) => {
       const response = await axios.post(`${API_BASE_URL.replace('/auth', '/telegram')}/send-otp`, {}, {
         headers: { Authorization: `Bearer ${tempToken}` } // Adjust if using session
       });
-      return response.data || "OTP sent to your Telegram!";
+      return response.message || "OTP sent to your Telegram!";
     } else {
       // For email
       const response = await axios.post(`${API_BASE_URL}/send-otp`, {
@@ -69,9 +69,13 @@ export const register = async (username, password, email, mobile) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/register`, { username, password, email, mobile });
 
-    if (response.status === 201 || response.status === 200) {
-      return response.data.message || "Registration successful!";
-    } else {
+    if (response.data.tempToken) {
+          return {
+            tempToken: response.data.tempToken,
+            email: response.data.email,
+            requiresOtp: true,
+          };
+        } else {
       throw new Error(response.data.error || "Registration failed");
     }
   } catch (error) {

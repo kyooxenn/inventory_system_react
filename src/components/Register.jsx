@@ -39,16 +39,20 @@ export default function Register() {
         return;
       }
 
-      await register(
+      const res = await register(
         form.username.trim(),
         form.password.trim(),
         form.email.trim(),
         parsedNumber.number
       );
 
-      toast.success("Registration successful! You can now log in.");
-      navigate("/login");
-    } catch (err) {
+      localStorage.setItem("username", form.username.trim());
+
+      toast.success("Registration successful!");
+      if (res.tempToken) {
+          navigate("/verify-otp", { state: { tempToken: res.tempToken, email: res.email, fromRegister: true } });
+       }
+     }  catch (err) {
       toast.error(err?.message || "Username or email already exists.");
     } finally {
       setLoading(false);
@@ -130,15 +134,23 @@ export default function Register() {
                 onChange={handleChange}
                 required
               />
-              <input
-                type="email"
-                name="email"
-                placeholder="Email Address"
-                className={inputClass}
-                value={form.email}
-                onChange={handleChange}
-                required
-              />
+              {/* 📧 Email field with note */}
+              <div className="space-y-1">
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email Address"
+                  className={inputClass}
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                />
+                <small className="block text-gray-400 text-xs italic leading-snug px-1">
+                  💡 Please use a <span className="text-blue-400 font-semibold">valid email address</span>.
+                  A verification link will be sent after registration to prevent fake or spam accounts.
+                </small>
+              </div>
+
 
               {/* ✅ Mobile input with country code */}
               <div className="flex items-center w-full">
@@ -172,6 +184,15 @@ export default function Register() {
                   }}
                   required
                 />
+              </div>
+              {/* 📱 Telegram-linked number note */}
+              <div className="bg-gray-800/70 border border-blue-500/40 rounded-lg p-3 text-xs text-gray-300 leading-relaxed mt-4">
+                <p>
+                  ⚠️ <span className="text-blue-400 font-semibold">Important:</span> Enter the same{" "}
+                  <span className="text-white font-semibold">phone number</span> linked to your{" "}
+                  <span className="text-blue-400 font-semibold">Telegram account</span>. OTPs will be sent
+                  via Telegram for verification.
+                </p>
               </div>
 
               {/* ✅ Password input with toggle */}

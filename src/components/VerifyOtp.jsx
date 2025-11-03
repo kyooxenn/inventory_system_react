@@ -47,6 +47,15 @@ export default function VerifyOtp() {
   const pollingRef = useRef(null);
   const stopTimeoutRef = useRef(null);
 
+  const fromRegister = location.state?.fromRegister || false;
+
+  // Force method to email if from register
+  useEffect(() => {
+    if (fromRegister) {
+      setMethod("email");
+    }
+  }, [fromRegister]);
+
   useEffect(() => {
     if (!tempToken) {
       toast.error("Session expired. Please login again.");
@@ -326,20 +335,25 @@ export default function VerifyOtp() {
                       checked={method === "email"}
                       onChange={(e) => setMethod(e.target.value)}
                       className="text-blue-500"
+                      disabled={fromRegister}
                     />
                     <span className="text-white">Email</span>
                   </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="method"
-                      value="telegram"
-                      checked={method === "telegram"}
-                      onChange={(e) => setMethod(e.target.value)}
-                      className="text-blue-500"
-                    />
-                    <span className="text-white">Telegram</span>
-                  </label>
+
+                  {/* Only show Telegram option if not from register */}
+                  {!fromRegister && (
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="method"
+                        value="telegram"
+                        checked={method === "telegram"}
+                        onChange={(e) => setMethod(e.target.value)}
+                        className="text-blue-500"
+                      />
+                      <span className="text-white">Telegram</span>
+                    </label>
+                  )}
                 </div>
               </div>
             )}
