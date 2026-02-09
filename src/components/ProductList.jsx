@@ -14,22 +14,8 @@ const EmptyState = ({ message }) => (
     transition={{ duration: 0.5 }}
     className="flex flex-col items-center justify-center py-12 text-gray-500"
   >
-    <motion.div
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ delay: 0.1, type: "spring", stiffness: 120 }}
-      className="text-6xl mb-3"
-    >
-      📭
-    </motion.div>
-    <motion.p
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-      className="italic text-gray-400 text-lg"
-    >
-      {message}
-    </motion.p>
+    <div className="text-6xl mb-3">📭</div>
+    <p className="italic text-gray-400 text-lg">{message}</p>
   </motion.div>
 );
 
@@ -47,12 +33,11 @@ export default function ProductList() {
   const [isSearching, setIsSearching] = useState(false);
 
   const PRODUCT_TYPES = [
-    "Books", "Movies", "Music", "Games", "Electronics", "Computers", "Home",
-    "Garden", "Tools", "Grocery", "Health", "Beauty", "Toys", "Kids", "Baby",
-    "Clothing", "Shoes", "Jewelery", "Sports", "Outdoors", "Automotive", "Industrial"
+    "Books","Movies","Music","Games","Electronics","Computers","Home",
+    "Garden","Tools","Grocery","Health","Beauty","Toys","Kids","Baby",
+    "Clothing","Shoes","Jewelery","Sports","Outdoors","Automotive","Industrial"
   ];
 
-  /* Pagination */
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 5;
   const hasSelection = selectedIds.length > 0;
@@ -66,7 +51,6 @@ export default function ProductList() {
       setFiltered(data?.content || []);
       setTotalPages(data?.totalPages || 1);
     } catch (err) {
-      console.error(err);
       toast.error(err.message || "Failed to load products.");
     } finally {
       setLoading(false);
@@ -80,7 +64,9 @@ export default function ProductList() {
 
   /* ---------------- Search Products ---------------- */
   const handleSearch = useCallback(async () => {
+    setLoading(true);
     setPageTransitioning(true);
+
     try {
       if (!searchQuery.trim() && !category.trim()) {
         setIsSearching(false);
@@ -92,19 +78,24 @@ export default function ProductList() {
       setIsSearching(true);
       setCurrentPage(1);
 
-      const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-      await delay(300);
+      const results = await getProduct(
+        searchQuery.trim(),
+        category.trim(),
+        0,
+        productsPerPage
+      );
 
-      const results = await getProduct(searchQuery.trim(), category.trim(), 0, productsPerPage);
       setFiltered(results?.content || []);
       setTotalPages(results?.totalPages || 1);
-      if (!results?.content?.length) toast("No matching products found.");
+
+      if (!results?.content?.length) {
+        toast("No matching products found.");
+      }
     } catch (err) {
-      console.error(err);
       toast.error(err.message || "Search failed.");
     } finally {
       setLoading(false);
-      setTimeout(() => setPageTransitioning(false), 200);
+      setPageTransitioning(false);
     }
   }, [searchQuery, category, loadProducts]);
 
@@ -112,21 +103,25 @@ export default function ProductList() {
   const handleDelete = async (id) => {
     if (!confirm("Delete this product?")) return;
     setDeleting(id);
+
     try {
       await deleteProduct(id);
       toast.success("Product deleted successfully!");
       setSelectedIds((prev) => prev.filter((pid) => pid !== id));
 
       if (isSearching) {
-        const results = await getProduct(searchQuery.trim(), category.trim(), currentPage - 1, productsPerPage);
+        const results = await getProduct(
+          searchQuery.trim(),
+          category.trim(),
+          currentPage - 1,
+          productsPerPage
+        );
         setFiltered(results?.content || []);
         setTotalPages(results?.totalPages || 1);
-        if (!results?.content?.length && currentPage > 1) setCurrentPage(currentPage - 1);
       } else {
         await loadProducts(currentPage - 1);
       }
     } catch (err) {
-      console.error(err);
       toast.error(err.message || "Failed to delete product.");
     } finally {
       setDeleting(null);
@@ -139,60 +134,71 @@ export default function ProductList() {
 
     setLoading(true);
     try {
-      await Promise.all(selectedIds.map((id) => deleteProduct(id)));
-      toast.success(`${selectedIds.length} product(s) deleted.`);
+      await Promise.all(selectedIds.map(deleteProduct));
+      toast.success("Products deleted.");
       setSelectedIds([]);
+
       if (isSearching) {
-        const results = await getProduct(searchQuery.trim(), category.trim(), currentPage - 1, productsPerPage);
+        const results = await getProduct(
+          searchQuery.trim(),
+          category.trim(),
+          currentPage - 1,
+          productsPerPage
+        );
         setFiltered(results?.content || []);
         setTotalPages(results?.totalPages || 1);
-        if (!results?.content?.length && currentPage > 1) setCurrentPage(currentPage - 1);
       } else {
         await loadProducts(currentPage - 1);
       }
     } catch (err) {
-      console.error(err);
-      toast.error(err.message || "Failed to delete selected products.");
+      toast.error(err.message || "Bulk delete failed.");
     } finally {
       setLoading(false);
     }
   };
 
   /* ---------------- Pagination Logic ---------------- */
-  const currentProducts = filtered;
-
   const handlePageChange = async (newPage) => {
     if (newPage < 1 || newPage > totalPages) return;
+
+    setLoading(true);
     setPageTransitioning(true);
     setCurrentPage(newPage);
     setSelectedIds([]);
 
-    const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-    await delay(300);
-
     try {
       if (isSearching) {
-        setLoading(true);
-        const results = await getProduct(searchQuery.trim(), category.trim(), newPage - 1, productsPerPage);
+        const results = await getProduct(
+          searchQuery.trim(),
+          category.trim(),
+          newPage - 1,
+          productsPerPage
+        );
         setFiltered(results?.content || []);
         setTotalPages(results?.totalPages || 1);
       } else {
         await loadProducts(newPage - 1);
       }
-    } catch (err) {
-      console.error(err);
-      toast.error(err.message || "Failed to load page.");
+    } catch {
+      toast.error("Failed to load page.");
     } finally {
       setLoading(false);
-      setTimeout(() => setPageTransitioning(false), 200);
+      setPageTransitioning(false);
     }
   };
 
   /* ---------------- Checkbox Logic ---------------- */
   const headerCheckboxRef = useRef(null);
+  const currentProducts = filtered;
   const currentPageIds = currentProducts.map((p) => p.id);
-  const allSelectedOnPage = currentPageIds.length > 0 && currentPageIds.every((id) => selectedIds.includes(id));
-  const someSelectedOnPage = currentPageIds.some((id) => selectedIds.includes(id)) && !allSelectedOnPage;
+
+  const allSelectedOnPage =
+    currentPageIds.length > 0 &&
+    currentPageIds.every((id) => selectedIds.includes(id));
+
+  const someSelectedOnPage =
+    currentPageIds.some((id) => selectedIds.includes(id)) &&
+    !allSelectedOnPage;
 
   useEffect(() => {
     if (headerCheckboxRef.current) {
@@ -204,19 +210,16 @@ export default function ProductList() {
     if (allSelectedOnPage) {
       setSelectedIds((prev) => prev.filter((id) => !currentPageIds.includes(id)));
     } else {
-      setSelectedIds((prev) => {
-        const s = new Set(prev);
-        currentPageIds.forEach((id) => s.add(id));
-        return Array.from(s);
-      });
+      setSelectedIds((prev) => [...new Set([...prev, ...currentPageIds])]);
     }
   };
 
   const toggleSelect = (id) => {
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   };
 
-  /* ---------------- Derived Values ---------------- */
   const emptyMessage = useMemo(
     () => (searchQuery ? "No matching products found." : "No products available."),
     [searchQuery]
