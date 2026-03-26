@@ -62,6 +62,27 @@ export default function ProductList() {
     loadProducts(0);
   }, [loadProducts]);
 
+    useEffect(() => {
+      if (currentPage > totalPages) {
+        const newPage = totalPages || 1;
+        setCurrentPage(newPage);
+
+        if (isSearching) {
+          getProduct(
+            searchQuery.trim(),
+            category.trim(),
+            newPage - 1,
+            productsPerPage
+          ).then((res) => {
+            setFiltered(res?.content || []);
+            setTotalPages(res?.totalPages || 1);
+          });
+        } else {
+          loadProducts(newPage - 1);
+        }
+      }
+    }, [totalPages]);
+
   /* ---------------- Search Products ---------------- */
   const handleSearch = useCallback(async () => {
     setLoading(true);
@@ -109,17 +130,25 @@ export default function ProductList() {
       toast.success("Product deleted successfully!");
       setSelectedIds((prev) => prev.filter((pid) => pid !== id));
 
+      let newPage = currentPage;
+
+      // If deleting last item on page → move back
+      if (filtered.length === 1 && currentPage > 1) {
+        newPage = currentPage - 1;
+        setCurrentPage(newPage);
+      }
+
       if (isSearching) {
         const results = await getProduct(
           searchQuery.trim(),
           category.trim(),
-          currentPage - 1,
+          newPage - 1,
           productsPerPage
         );
         setFiltered(results?.content || []);
         setTotalPages(results?.totalPages || 1);
       } else {
-        await loadProducts(currentPage - 1);
+        await loadProducts(newPage - 1);
       }
     } catch (err) {
       toast.error(err.message || "Failed to delete product.");
@@ -136,19 +165,29 @@ export default function ProductList() {
     try {
       await Promise.all(selectedIds.map(deleteProduct));
       toast.success("Products deleted.");
+
+      const deletedCount = selectedIds.length;
       setSelectedIds([]);
+
+      let newPage = currentPage;
+
+      // If all items on page are deleted → move back
+      if (filtered.length === deletedCount && currentPage > 1) {
+        newPage = currentPage - 1;
+        setCurrentPage(newPage);
+      }
 
       if (isSearching) {
         const results = await getProduct(
           searchQuery.trim(),
           category.trim(),
-          currentPage - 1,
+          newPage - 1,
           productsPerPage
         );
         setFiltered(results?.content || []);
         setTotalPages(results?.totalPages || 1);
       } else {
-        await loadProducts(currentPage - 1);
+        await loadProducts(newPage - 1);
       }
     } catch (err) {
       toast.error(err.message || "Bulk delete failed.");
