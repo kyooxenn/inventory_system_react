@@ -191,7 +191,7 @@ export default function Register() {
                   ⚠️ <span className="text-blue-400 font-semibold">Important:</span> Enter the same{" "}
                   <span className="text-white font-semibold">phone number</span> linked to your{" "}
                   <span className="text-blue-400 font-semibold">Telegram account</span>. OTPs will be sent
-                  via Telegram for verification.
+                  via Email or Telegram for verification.
                 </p>
               </div>
 
