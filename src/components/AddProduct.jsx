@@ -106,7 +106,7 @@ export default function AddProduct() {
           to="/"
           className="text-gray-300 hover:text-blue-400 transition font-medium"
         >
-          ← Back to Dashboard
+          🧭 Back to Dashboard
         </Link>
       </div>
 
