@@ -55,7 +55,7 @@ export const generateOtp = async (tempToken, payload, method) => {
     }
   } catch (error) {
     const message =
-      error.response?.errorMessage ||
+      error.errorMessage ||
       (error.response?.status === 401
         ? "Session expired or invalid"
         : "Failed to send OTP");
