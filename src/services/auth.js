@@ -54,6 +54,8 @@ export const generateOtp = async (tempToken, payload, method) => {
       return response.data.message || "OTP sent to your email!";
     }
   } catch (error) {
+
+  console.log("error message" + error)
     const message =
       error.errorMessage ||
       (error.response?.status === 401
