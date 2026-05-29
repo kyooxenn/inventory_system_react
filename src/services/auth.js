@@ -41,7 +41,7 @@ export const generateOtp = async (tempToken, payload, method) => {
   try {
     if (method === "telegram") {
       // For Telegram, call the Telegram endpoint (no payload needed if linked)
-      const response = await axios.post(`${API_BASE_URL.replace('/auth', '/telegram')}/send-otp`, {}, {
+      const response = await axios.post(`${API_BASE_URL}/send-otp`, {}, {
         headers: { Authorization: `Bearer ${tempToken}` } // Adjust if using session
       });
       return response.message || "OTP sent to your Telegram!";
